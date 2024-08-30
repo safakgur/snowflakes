@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Snowflakes</AssemblyName>
+    <AssemblyVersion>0.1.0</AssemblyVersion>
+    <PackageVersion>$(AssemblyVersion)-alpha</PackageVersion>
+    <RootNamespace>$(AssemblyName)</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(AssemblyName).Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Title>Snowflakes</Title>
+    <Product>$(Title)</Product>
+    <Authors>Şafak Gür</Authors>
+    <Description>Snowflakes is a .NET implementation of the distributed unique ID generator created by Twitter (now X).</Description>
+    <Copyright>Copyright © Şafak Gür 2024</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/safakgur/snowflakes</RepositoryUrl>
+    <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageOutputPath>../artifacts/</PackageOutputPath>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <None Include="../README.md">
+      <Pack>True</Pack>
+      <PackagePath>/</PackagePath>
+    </None>
+  </ItemGroup>
+  
+</Project>

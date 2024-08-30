@@ -1,0 +1,82 @@
+﻿using Snowflakes.Components;
+
+namespace Snowflakes.Tests.Components;
+
+public sealed class SnowflakeComponentTests
+{
+    public static TheoryData<int, bool> LengthInBits_IsValid_Data { get; } = new()
+    {
+        { -1, false },
+        { 0, false },
+        { 1, true },
+        { 63, true },
+        { 64, false },
+        { 0, false },
+        { 1, true  },
+        { 63, true },
+        { 64, false }
+    };
+
+    [Theory]
+    [MemberData(nameof(LengthInBits_IsValid_Data))]
+    public void Ctor_validates_and_sets_lengthInBits(int lengthInBits, bool isValid)
+    {
+        if (isValid)
+        {
+            var component = new IncrementingTestSnowflakeComponent(lengthInBits);
+            Assert.Equal(lengthInBits, component.LengthInBits);
+        }
+        else
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
+                new IncrementingTestSnowflakeComponent(lengthInBits));
+        }
+    }
+
+    [Fact]
+    public void GetValue_validates_ctx()
+    {
+        var component = new IncrementingTestSnowflakeComponent(lengthInBits: 10);
+
+        Assert.Throws<ArgumentNullException>("ctx", () => component.GetValue(null!));
+    }
+
+    [Theory]
+    [InlineData(4, 0b_1101, 0b_1101)]
+    [InlineData(3, 0b_1101, 0b_0101)]
+    [InlineData(2, 0b_1011, 0b_0011)]
+    [InlineData(1, 0b_1011, 0b_0001)]
+    public void GetValue_masks_value(int lengthInBits, long originalValue, long maskedValue)
+    {
+        var component = new IncrementingTestSnowflakeComponent(lengthInBits, originalValue);
+
+        var value = component.GetValue(new([component]));
+
+        Assert.Equal(maskedValue, value);
+    }
+
+    [Fact]
+    public void GetValue_saves_value_in_LastValue()
+    {
+        var component = new IncrementingTestSnowflakeComponent(lengthInBits: 10, startValue: 1);
+
+        Assert.Equal(0, component.LastValue);
+
+        var value = component.GetValue(new([component]));
+
+        Assert.Equal(1, value);
+        Assert.Equal(1, component.LastValue);
+
+        value = component.GetValue(new([component]));
+
+        Assert.Equal(2, value);
+        Assert.Equal(2, component.LastValue);
+    }
+
+    private sealed class IncrementingTestSnowflakeComponent(int lengthInBits, long startValue = 0L)
+        : SnowflakeComponent(lengthInBits)
+    {
+        protected override long CalculateValue(SnowflakeGenerationContext ctx) => startValue++;
+    }
+
+}
