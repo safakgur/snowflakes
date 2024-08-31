@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Snowflakes</AssemblyName>
     <AssemblyVersion>0.1.0</AssemblyVersion>
-    <PackageVersion>$(AssemblyVersion)-alpha2</PackageVersion>
+    <PackageVersion>$(AssemblyVersion)-beta1</PackageVersion>
     <RootNamespace>$(AssemblyName)</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>

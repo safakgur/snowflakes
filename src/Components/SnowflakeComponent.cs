@@ -21,7 +21,6 @@ namespace Snowflakes.Components;
 ///             components do not need to be implemented in a thread-safe manner.
 ///         </item>
 ///     </list>
-///    
 /// </remarks>
 public abstract class SnowflakeComponent
 {

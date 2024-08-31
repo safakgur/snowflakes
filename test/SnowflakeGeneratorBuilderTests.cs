@@ -1,0 +1,192 @@
+﻿using System.Security.Cryptography;
+using NSubstitute;
+using Snowflakes.Components;
+
+namespace Snowflakes.Tests;
+
+public sealed class SnowflakeGeneratorBuilderTests
+{
+    private readonly SnowflakeGeneratorBuilder _builder = new();
+
+    [Fact]
+    public void Add_throws_when_component_is_null()
+    {
+        Assert.Throws<ArgumentNullException>("component", () => _builder.Add(null!));
+    }
+
+    [Fact]
+    public void Add_throws_when_component_is_already_added()
+    {
+        var component = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
+
+        _builder.Add(component);
+
+        Assert.Throws<ArgumentException>("component", () => _builder.Add(component));
+    }
+
+    [Fact]
+    public void Add_throws_when_component_is_too_big()
+    {
+        var component63 = new ConstantSnowflakeComponent(lengthInBits: 63, value: 1);
+        var component1 = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
+
+        _builder.Add(component63);
+
+        Assert.Throws<ArgumentException>("component", () => _builder.Add(component1));
+    }
+
+    [Fact]
+    public void Add_returns_current_instance()
+    {
+        var component = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
+
+        var result = _builder.Add(component);
+
+        Assert.Same(_builder, result);
+    }
+
+    [Fact]
+    public void AddTimestamp_creates_component_with_correct_properties()
+    {
+        var random = new Random();
+
+        var lengthInBits = random.Next(1, 10);
+        var epoch = DateTimeOffset.FromUnixTimeMilliseconds(random.Next(1, 10));
+        var ticksPerUnit = random.Next(1, 10);
+        var now = new DateTimeOffset(2024, 08, 31, 18, 18, 0, TimeSpan.Zero);
+
+        var testTimeProvider = Substitute.For<TimeProvider>();
+        testTimeProvider.GetUtcNow().Returns(now);
+
+        var component = _builder
+            .AddTimestamp(lengthInBits, epoch, ticksPerUnit, testTimeProvider)
+            .Build().Components[0];
+
+        var tsComponent = Assert.IsType<TimestampSnowflakeComponent>(component);
+
+        Assert.Equal(lengthInBits, tsComponent.LengthInBits);
+        Assert.Equal(epoch, tsComponent.Epoch);
+        Assert.Equal(ticksPerUnit, tsComponent.TicksPerUnit);
+        Assert.Equal(testTimeProvider, tsComponent.TimeProvider);
+    }
+
+    [Fact]
+    public void AddConstant_value_creates_component_with_correct_properties()
+    {
+        var random = new Random();
+
+        var lengthInBits = random.Next(1, 10);
+        var value = random.Next(1, 10);
+
+        var component = _builder
+            .AddConstant(lengthInBits, value)
+            .Build().Components[0];
+
+        var constComponent = Assert.IsType<ConstantSnowflakeComponent>(component);
+
+        Assert.Equal(lengthInBits, constComponent.LengthInBits);
+        Assert.Equal(value, constComponent.Value);
+    }
+
+    [Theory]
+    [InlineData("MD5", 2353163291832495564L)]
+    [InlineData("SHA256", 8069623936395563335L)]
+    public void AddConstant_valueToHash_creates_component_with_correct_properties(
+        string algName, long expectedValue)
+    {
+        var lengthInBits = 63;
+        var valueToHash = "test value";
+        using HashAlgorithm hashAlg = algName switch
+        {
+            "MD5" => MD5.Create(),
+            "SHA256" => SHA256.Create(),
+            _ => throw new NotImplementedException()
+        };
+
+        var component = _builder
+            .AddConstant(lengthInBits, valueToHash, hashAlg)
+            .Build().Components[0];
+
+        var constComponent = Assert.IsType<ConstantSnowflakeComponent>(component);
+
+        Assert.Equal(lengthInBits, constComponent.LengthInBits);
+        Assert.Equal(expectedValue, constComponent.Value);
+    }
+
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(1, 3)]
+    public void AddSequenceForTimestamp_creates_component_with_correct_properties(
+        int tsComponentIndex, int seqComponentIndex)
+    {
+        var random = new Random();
+
+        var lengthInBits = random.Next(1, 10);
+
+        for (var i = 0; i < tsComponentIndex; i++)
+            _builder.AddConstant(lengthInBits: 1, value: 0);
+
+        _builder.AddTimestamp(1, epoch: DateTimeOffset.UnixEpoch);
+
+        for (var i = tsComponentIndex + 1; i < seqComponentIndex; i++)
+            _builder.AddConstant(lengthInBits: 1, value: 0);
+
+        _builder.AddSequenceForTimestamp(lengthInBits);
+
+        var component = _builder.Build().Components[^1];
+        var seqComponent = Assert.IsType<SequenceSnowflakeComponent>(component);
+
+        Assert.Equal(lengthInBits, seqComponent.LengthInBits);
+        Assert.Equal(tsComponentIndex, seqComponent.ReferenceComponentIndex);
+    }
+
+    [Fact]
+    public void AddSequence_creates_component_with_correct_properties()
+    {
+        var random = new Random();
+
+        var lengthInBits = random.Next(1, 10);
+        var refComponentIndex = random.Next(1, 10);
+
+        for (var i = 0 + 1; i <= refComponentIndex; i++)
+            _builder.AddConstant(lengthInBits: 1, value: 0);
+
+        var component = _builder
+            .AddSequence(lengthInBits, refComponentIndex)
+            .Build().Components[^1];
+
+        var seqComponent = Assert.IsType<SequenceSnowflakeComponent>(component);
+
+        Assert.Equal(lengthInBits, seqComponent.LengthInBits);
+        Assert.Equal(refComponentIndex, seqComponent.ReferenceComponentIndex);
+
+    }
+
+    [Fact]
+    public void Build_throws_when_no_components_added()
+    {
+        Assert.Throws<InvalidOperationException>(() => _builder.Build());
+    }
+
+    [Fact]
+    public void Build_adds_components_in_correct_order()
+    {
+        var gen1 = _builder
+            .AddConstant(lengthInBits: 1, value: 8)
+            .AddSequence(lengthInBits: 1, refComponentIndex: 0)
+            .Build();
+
+        Assert.Equal(2, gen1.Components.Length);
+        Assert.Equal(typeof(ConstantSnowflakeComponent), gen1.Components[0].GetType());
+        Assert.Equal(typeof(SequenceSnowflakeComponent), gen1.Components[1].GetType());
+
+        var gen2 = new SnowflakeGeneratorBuilder()
+            .AddTimestamp(lengthInBits: 1, epoch: DateTimeOffset.UnixEpoch)
+            .AddConstant(lengthInBits: 1, value: 8)
+            .Build();
+
+        Assert.Equal(2, gen2.Components.Length);
+        Assert.Equal(typeof(TimestampSnowflakeComponent), gen2.Components[0].GetType());
+        Assert.Equal(typeof(ConstantSnowflakeComponent), gen2.Components[1].GetType());
+    }
+}

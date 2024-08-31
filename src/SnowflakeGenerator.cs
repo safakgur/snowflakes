@@ -74,7 +74,8 @@ public sealed class SnowflakeGenerator
 
         if (totalLengthInBits > SnowflakeComponent.MaxLengthInBits)
             throw new ArgumentException(
-                "Total number of bits produced by the components cannot exceed 63.", nameof(components));
+                $"Total number of bits produced by the components cannot exceed {SnowflakeComponent.MaxLengthInBits}.",
+                nameof(components));
 
         if (needsSort)
             Array.Sort(_componentsInExecutionOrder,

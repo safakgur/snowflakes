@@ -42,10 +42,11 @@ Here's how to configure this using Snowflakes:
 ```csharp
 var epoch = DateTimeOffset.FromUnixTimeMilliseconds(1288834974657); // X's epoch
 var instanceId = 0; // e.g., ordinal index of a K8 pod
-var snowflakeGen = new SnowflakeGenerator([
-    new TimestampSnowflakeComponent(41, epoch, TimeSpan.TicksPerMillisecond),
-    new ConstantSnowflakeComponent(10, instanceId),
-    new SequenceSnowflakeComponent(12, refComponentIndex: 0)]);
+var snowflakeGen = new SnowflakeGeneratorBuilder()
+    .AddTimestamp(41, epoch, TimeSpan.TicksPerMillisecond)
+    .AddConstant(10, instanceId)
+    .AddSequenceForTimestamp(12)
+    .Build();
 
 long snowflake = snowflakeGen.NewSnowflake();
 ```
@@ -61,10 +62,11 @@ Here's how to configure this using Snowflakes:
 ```csharp
 var epoch = new DateTimeOffset(2024, 8, 30, 0, 0, 0, TimeSpan.Zero); // e.g., when your system came online
 var instanceId = 0; // e.g., ordinal index of a K8 pod
-var snowflakeGen = new SnowflakeGenerator([
-    new TimestampSnowflakeComponent(39, epoch, TimeSpan.TicksPerMillisecond * 10), // 10 ms increments
-    new SequenceSnowflakeComponent(8, refComponentIndex: 0),
-    new ConstantSnowflakeComponent(16, instanceId)]);
+var snowflakeGen = new SnowflakeGeneratorBuilder()
+    .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10) // 10 ms increments
+    .AddSequenceForTimestamp(8)
+    .AddConstant(16, instanceId)
+    .Build();
 
 long snowflake = snowflakeGen.NewSnowflake();
 ```
@@ -126,10 +128,11 @@ services.AddSingleton(static serviceProvider =>
     var epoch = new DateTimeOffset(2024, 8, 30, 0, 0, 0, TimeSpan.Zero);
 
     // The generator below uses the Sonyflake configuration.
-    return new SnowflakeGenerator([
-        new TimestampSnowflakeComponent(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider),
-        new SequenceSnowflakeComponent(8, refComponentIndex: 0),
-        new ConstantSnowflakeComponent(16, programOpts.InstanceIndex)]);
+    return new SnowflakeGeneratorBuilder()
+        .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider)
+        .AddSequenceForTimestamp(8)
+        .AddConstant(16, programOpts.InstanceIndex)
+        .Build();
 });
 ```
 
@@ -156,10 +159,11 @@ services.AddSingleton(static serviceProvider =>
     using var instanceIdHashAlg = SHA512.Create();
 
     // The generator below uses the Sonyflake configuration.
-    return new SnowflakeGenerator([
-        new TimestampSnowflakeComponent(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider),
-        new SequenceSnowflakeComponent(8, refComponentIndex: 0),
-        new ConstantSnowflakeComponent(16, programOpts.InstanceId, instanceIdHashAlg)]);
+    return new SnowflakeGeneratorBuilder()
+        .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider)
+        .AddSequenceForTimestamp(8)
+        .AddConstant(16, programOpts.InstanceId, instanceIdHashAlg)
+        .Build();
 });
 ```
 
