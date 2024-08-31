@@ -100,12 +100,12 @@ public sealed class ConstantSnowflakeComponentTests
         var expectedSHA256Hash = 8069623936395563335L;
 
         using var md5HashAlg = MD5.Create();
-        var component = new ConstantSnowflakeComponent(lengthInBits, valueToHash!, md5HashAlg);
+        var component = new ConstantSnowflakeComponent(lengthInBits, valueToHash, md5HashAlg);
         var value = component.GetValue(new([component]));
         Assert.Equal(expectedMD5Hash, value);
 
         using var sha256HashAlg = SHA256.Create();
-        component = new ConstantSnowflakeComponent(lengthInBits, valueToHash!, sha256HashAlg);
+        component = new ConstantSnowflakeComponent(lengthInBits, valueToHash, sha256HashAlg);
         value = component.GetValue(new([component]));
         Assert.Equal(expectedSHA256Hash, value);
     }

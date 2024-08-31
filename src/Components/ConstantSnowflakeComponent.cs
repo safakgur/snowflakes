@@ -38,9 +38,9 @@ public sealed class ConstantSnowflakeComponent : SnowflakeComponent
     /// <param name="hashAlg">The hash algorithm used to hash the string value.</param>
     /// <remarks>
     ///     <para>
-    ///         Prefer the other constructor when possible and fallback to this one only if you
-    ///         cannot get an integer value, as hashing might produce conflicts. Choose a good
-    ///         algorithm and specify a higher length to minimize the risk of hash collisions.
+    ///         Only use the hashing version if you cannot get an integer value, as hashing might
+    ///         produce conflicts. Choose a good algorithm and specify a higher length to minimize
+    ///         the risk of hash collisions.
     ///     </para>
     ///     <para>
     ///         For example, if you use Azure App Services, there is no easy and reliable way of
@@ -51,6 +51,12 @@ public sealed class ConstantSnowflakeComponent : SnowflakeComponent
     ///         fixed-length identifier.
     ///     </para>
     /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="valueToHash" /> or <paramref name="hashAlg" /> is null.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    ///     <paramref name="valueToHash" /> is an empty string.
+    /// </exception>
     public ConstantSnowflakeComponent(int lengthInBits, string valueToHash, HashAlgorithm hashAlg)
         : base(lengthInBits)
     {
