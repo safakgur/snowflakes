@@ -1,5 +1,9 @@
 # Snowflakes
 
+[![NuGet](https://img.shields.io/nuget/v/Snowflakes.svg?style=flat)](https://www.nuget.org/packages/Snowflakes/)
+
+**[Note that this project is still in very early development]**
+
 Snowflake IDs, also known as snowflakes, are 64-bit, sortable identifiers generated in a distributed
 system that provide uniqueness across time and space without requiring a central authority.
 The format was [originally created by Twitter (now X)][twitter-announcement] and adopted by others
@@ -27,7 +31,7 @@ There are three standard components that make up a snowflake:
 
 ## Example Configurations
 
-X's implementation uses,
+### X's Implementation
 
 * 41-bit timestamp in units of 1 ms from the epoch, 1288834974657 (in Unix time milliseconds)
 * 10-bit instance ID
@@ -46,7 +50,7 @@ var snowflakeGen = new SnowflakeGenerator([
 long snowflake = snowflakeGen.NewSnowflake();
 ```
 
-Sony's Sonyflake produces,
+### Sony's Sonyflake
 
 * 39-bit timestamp in units of 10 ms from a specified epoch
 * 8-bit sequence number
@@ -64,6 +68,8 @@ var snowflakeGen = new SnowflakeGenerator([
 
 long snowflake = snowflakeGen.NewSnowflake();
 ```
+
+---
 
 Note that not only X and Sonyflake components have their lengths different, they're also placed in
 different orders with Sonyflake having the sequence number before the instance ID, which means they
