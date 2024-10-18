@@ -2,13 +2,11 @@
 
 public sealed class SnowflakeEncoderTests
 {
-    public static TheoryData<SnowflakeEncoder> AllEncoders { get; } = new()
-    {
+    public static TheoryData<SnowflakeEncoder> AllEncoders { get; } = new(
         SnowflakeEncoder.Base36Upper,
         SnowflakeEncoder.Base36Lower,
         SnowflakeEncoder.Base62,
-        SnowflakeEncoder.Base64Snow
-    };
+        SnowflakeEncoder.Base64Snow);
 
     [Theory]
     [MemberData(nameof(AllEncoders))]
