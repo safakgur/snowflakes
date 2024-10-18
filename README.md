@@ -106,9 +106,11 @@ Quoting the comparison from Sonyflake's README:
   before sorting or persisting them.
 
 * If you don't have access to an integer instance ID, you can use the hashing `AddConstant` overload
-  to get a reasonably high-cardinality value. Using Azure App Services is one example scenario where
-  you don't have access to an integer "index" of the instance, but you do have access to a string
-  (via the `WEBSITE_INSTANCE_ID` environment variable) that uniquely identifies it.
+  to get a reasonably high-cardinality value.
+
+  * Using Azure App Services is one example scenario where you don't have access to an integer
+    "index" of the instance, but you do have access to a string (via the `WEBSITE_INSTANCE_ID`
+    environment variable) that uniquely identifies it.
 
 * When setting up the timestamp component, consider supplying it with a `TimeProvider` as it can
   help with testing. The time provider is optional and will default to `TimeProvider.System`.
@@ -183,10 +185,8 @@ public class FooService(SnowflakeGenerator snowflakeGen)
 {
     public Foo CreateFoo()
     {
-        // This is it - NewSnowflake returns an Int64.
-        var id = snowflakeGen.NewSnowflake();
-
-        var foo = new Foo { Id = id };
+        // NewSnowflake returns an Int64.
+        var foo = new Foo { Id = snowflakeGen.NewSnowflake() };
 
         // ...
 

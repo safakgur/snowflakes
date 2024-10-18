@@ -5,8 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>Snowflakes</AssemblyName>
-    <AssemblyVersion>0.1.0</AssemblyVersion>
-    <PackageVersion>$(AssemblyVersion)-beta1</PackageVersion>
     <RootNamespace>$(AssemblyName)</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
@@ -32,6 +30,7 @@
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageOutputPath>../artifacts/</PackageOutputPath>
+    <PackageTags>snowflake-id;snowflakes;distributed-id;distributed;id;identifier</PackageTags>
   </PropertyGroup>
   
   <ItemGroup>
