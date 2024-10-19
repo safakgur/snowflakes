@@ -26,7 +26,7 @@ There are three standard components that make up a snowflake:
    This is also referred to as Machine ID or Shard ID.
 
 3. **Sequence number** - Incremented when multiple identifiers are generated at the
-   same unit of time on the same instance.
+   same unit of time.
 
 ## Example Configurations
 
@@ -114,9 +114,9 @@ Quoting the comparison from Sonyflake's README:
 * When setting up the timestamp component, consider supplying it with a `TimeProvider` as it can
   help with testing. The time provider is optional and will default to `TimeProvider.System`.
 
-### Code Samples
+## Code Samples
 
-#### Generator registration using an integer instance ID
+### Generator registration using an integer instance ID
 
 ```csharp
 services.AddSingleton(static serviceProvider =>
@@ -143,7 +143,7 @@ services.AddSingleton(static serviceProvider =>
 });
 ```
 
-#### Generator registration using a string instance ID
+### Generator registration using a string instance ID
 
 ```csharp
 services.AddSingleton(static serviceProvider =>
@@ -175,7 +175,7 @@ services.AddSingleton(static serviceProvider =>
 });
 ```
 
-#### Generator usage
+### Generator usage
 
 ```csharp
 // Assuming the generator is registered and can be injected.
@@ -194,7 +194,7 @@ public class FooService(SnowflakeGenerator snowflakeGen)
 }
 ```
 
-#### Encoder usage
+### Encoder usage
 
 ```csharp
 var encoder = SnowflakeEncoder.Base62; // There are base 36 and 64 encoders as well, all URI-safe.
