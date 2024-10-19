@@ -23,7 +23,7 @@ There are three standard components that make up a snowflake:
    Both the unit (precision) and the epoch are configurable.
 
 2. **Instance ID** - Represents the current process to provide uniqueness in space.  
-   This is also referred to as Machine ID and Shard ID.
+   This is also referred to as Machine ID or Shard ID.
 
 3. **Sequence number** - Incremented when multiple identifiers are generated at the
    same unit of time on the same instance.
