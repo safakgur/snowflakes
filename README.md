@@ -123,7 +123,8 @@ services.AddSingleton(static serviceProvider =>
 {
     // Assuming there is an options class that can provide information about the current instance.
     // Feel free to obtain the instance ID in a different way.
-    var programOpts = serviceProvider.GetRequiredService<ProgramOptions>();
+    var programOpts = serviceProvider.GetRequiredService<IOptions<ProgramOptions>>().Value;
+    var instanceIndex = programOpts.InstanceIndex;
 
     // Assuming a time provider is registered.
     // Feel free to omit it when setting up the timestamp component to default to TimeProvider.System.
@@ -138,7 +139,7 @@ services.AddSingleton(static serviceProvider =>
     return new SnowflakeGeneratorBuilder()
         .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider)
         .AddSequenceForTimestamp(8)
-        .AddConstant(16, programOpts.InstanceIndex)
+        .AddConstant(16, instanceIndex)
         .Build();
 });
 ```
@@ -150,7 +151,8 @@ services.AddSingleton(static serviceProvider =>
 {
     // Assuming there is an options class that can provide information about the current instance.
     // Feel free to obtain the instance ID in a different way.
-    var programOpts = serviceProvider.GetRequiredService<ProgramOptions>();
+    var programOpts = serviceProvider.GetRequiredService<IOptions<ProgramOptions>>().Value;
+    var instanceId = programOpts.InstanceId;
 
     // Assuming a time provider is registered.
     // Feel free to omit it when setting up the timestamp component to default to TimeProvider.System.
@@ -170,7 +172,7 @@ services.AddSingleton(static serviceProvider =>
     return new SnowflakeGeneratorBuilder()
         .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider)
         .AddSequenceForTimestamp(8)
-        .AddConstant(16, programOpts.InstanceId, instanceIdHashAlg)
+        .AddConstant(16, instanceId, instanceIdHashAlg)
         .Build();
 });
 ```
