@@ -1,8 +1,7 @@
-# Snowflakes
+# Snowflakes ![Logo][logo]
 
-[![NuGet](https://img.shields.io/nuget/v/Snowflakes.svg?style=flat)](https://www.nuget.org/packages/Snowflakes/)
-
-**[Note that this project is still in very early development]**
+[![CI][wf-ci-badge]][wf-ci]
+[![NuGet][nuget-badge]][nuget]
 
 Snowflake IDs, also known as snowflakes, are 64-bit, sortable identifiers generated in a distributed
 system that provide uniqueness across time and space without requiring a central authority.
@@ -51,7 +50,7 @@ var snowflakeGen = new SnowflakeGeneratorBuilder()
 long snowflake = snowflakeGen.NewSnowflake();
 ```
 
-### Sony's Sonyflake
+### Sonyflake (Sony's Implementation)
 
 * 39-bit timestamp in units of 10 ms from a specified epoch
 * 8-bit sequence number
@@ -204,6 +203,12 @@ var snowflake = snowflakeGen.NewSnowflake(); // 139611368062976
 var encodedSnowflake = encoder.Encode(snowflake); // "ddw3cbIG"
 var decodedSnowflake = encoder.Decode(encodedSnowflake); // 139611368062976
 ```
+
+[logo]: https://raw.githubusercontent.com/safakgur/snowflakes/main/media/logo-28.png "Logo"
+[wf-ci]: https://github.com/safakgur/snowflakes/actions/workflows/ci.yml
+[wf-ci-badge]: https://github.com/safakgur/snowflakes/actions/workflows/ci.yml/badge.svg?event=push
+[nuget]: https://www.nuget.org/packages/Snowflakes/
+[nuget-badge]: https://img.shields.io/nuget/v/Snowflakes.svg?style=flat
 
 [twitter-announcement]: https://blog.twitter.com/2010/announcing-snowflake "Announcing Snowflake @ Twitter Engineering"
 [sonyflake]: https://github.com/sony/sonyflake "Sonyflake"
