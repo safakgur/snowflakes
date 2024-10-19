@@ -1,5 +1,5 @@
-﻿using Snowflakes.Components;
-using NSubstitute;
+﻿using NSubstitute;
+using Snowflakes.Components;
 
 namespace Snowflakes.Tests;
 

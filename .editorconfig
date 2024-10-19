@@ -6,25 +6,15 @@ root = true
 # Don't use tabs for indentation.
 [*]
 indent_style = space
-# (Please don't specify an indent_size here; that has too many unintended consequences.)
-spelling_exclusion_path = SpellingExclusions.dic
+insert_final_newline = true
 
 # Code files
 [*.{cs,csx,vb,vbx}]
 indent_size = 4
-insert_final_newline = true
 charset = utf-8-bom
 
-# XML project files
-[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
-indent_size = 2
-
-# XML config files
-[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct}]
-indent_size = 2
-
-# JSON files
-[*.json]
+# Project, config, and data files
+[*.{csproj,ruleset,config,nuspec,resx,json,yml}]
 indent_size = 2
 
 # Powershell files
@@ -282,3 +272,6 @@ dotnet_diagnostic.IDE2006.severity = warning
 # CA1822: Make member static
 # There is a risk of accidentally breaking an internal API that partners rely on though IVT.
 dotnet_code_quality.CA1822.api_surface = private
+
+# xUnit1044: Avoid using TheoryData type arguments that are not serializable
+dotnet_diagnostic.xUnit1044.severity = none

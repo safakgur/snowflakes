@@ -1,0 +1,90 @@
+﻿name: CI
+run-name: >
+  CI for "${{ github.event_name == 'pull_request' && github.event.pull_request.title ||
+                                                     github.event.head_commit.message }}"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, ready_for_review, synchronize]
+
+jobs:
+  ci:
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Format code
+        run: dotnet format --no-restore --verify-no-changes -v detailed
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Run tests
+        run: dotnet test --no-build -c Release
+
+      - name: Check for changes in src/ # Fails if there is no tag.
+        id: check-changes
+        run: |
+          git fetch origin main --tags --depth=1
+
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "Latest tag: $latest_tag"
+          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+
+          src_changes=$(git diff --name-only $latest_tag | grep ^src/ || true)
+          if [ -n "$src_changes" ]; then
+            sleep .5
+            printf "Changes:\n$src_changes"
+            echo "src_changed=true" >> $GITHUB_ENV
+          else
+            echo "No change in src/"
+          fi
+
+      - name: Get source version
+        run: |
+          src_ver=`cat VERSION`
+          echo "Source version: v$src_ver"
+          echo "src_ver=$src_ver" >> $GITHUB_ENV
+
+          latest_tag="${{ env.latest_tag }}"
+          if [ "$latest_tag" != "v$src_ver" ]; then
+            echo "Source version changed from $latest_tag"
+            echo "src_ver_changed=true" >> $GITHUB_ENV
+
+            if [ $(git tag -l "v$src_ver") ]; then
+              echo "::error file=VERSION::Tag v$src_ver already exists."
+              exit 1
+            fi
+          elif [ "${{ env.src_changed }}" == "true" ]; then
+            echo "::error file=VERSION::Source is different but the build version is unchanged."
+            exit 1
+          fi
+      
+      - name: Publish
+        if: github.event_name == 'push' &&
+            github.ref_name == 'main' &&
+            env.src_ver_changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet pack -o artifacts --no-build -c Release -p Version=${{ env.src_ver }}
+
+          nuget_src="https://api.nuget.org/v3/index.json"
+          dotnet nuget push "artifacts/*.${{ env.src_ver }}.nupkg" -s $nuget_src -k ${{secrets.nuget_api_key}}
+
+          gh release create \
+            --generate-notes \
+            --notes-start-tag ${{ env.latest_tag }} \
+            v${{ env.src_ver }}

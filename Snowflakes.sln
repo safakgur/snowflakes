@@ -1,11 +1,34 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
+# 17
 VisualStudioVersion = 17.11.35219.272
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Snowflakes", "src\Snowflakes.csproj", "{708D59CC-ED67-405A-8087-94BCA793C0C3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Snowflakes.Tests", "test\Snowflakes.Tests.csproj", "{834B591D-BD95-49FA-A69D-938F0665C3E4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_root", "_root", "{40799EF8-FBBA-4D36-A5F5-EA5A819C4F2C}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		CODE_OF_CONDUCT.md = CODE_OF_CONDUCT.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		LICENSE = LICENSE
+		README.md = README.md
+		SECURITY.md = SECURITY.md
+		VERSION = VERSION
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{1B89F6AC-DB8A-45BD-8139-87C06F5FF4EC}"
+	ProjectSection(SolutionItems) = preProject
+		.github\dependabot.yml = .github\dependabot.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{720900DA-0E39-4405-B3AF-54E7796A453B}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.yml = .github\workflows\ci.yml
+		.github\workflows\codeql.yml = .github\workflows\codeql.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,6 +47,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1B89F6AC-DB8A-45BD-8139-87C06F5FF4EC} = {40799EF8-FBBA-4D36-A5F5-EA5A819C4F2C}
+		{720900DA-0E39-4405-B3AF-54E7796A453B} = {1B89F6AC-DB8A-45BD-8139-87C06F5FF4EC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C5266D3C-00E8-4C15-9F10-FDF35FE025F4}
