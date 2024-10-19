@@ -27,6 +27,7 @@
     <RepositoryUrl>https://github.com/safakgur/snowflakes</RepositoryUrl>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>logo-64.png</PackageIcon>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageOutputPath>../artifacts/</PackageOutputPath>
@@ -34,10 +35,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Include="../README.md">
-      <Pack>True</Pack>
-      <PackagePath>/</PackagePath>
-    </None>
+    <None Include="../README.md" Visible="false" Pack="true" PackagePath="/" />
+    <None Include="../media/logo-64.png" Visible="false" Pack="true" PackagePath="/" />
   </ItemGroup>
   
 </Project>
