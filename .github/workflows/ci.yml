@@ -1,8 +1,5 @@
 ﻿name: CI
-run-name: >
-  CI for "${{ github.event_name == 'pull_request' && github.event.pull_request.title ||
-                                                     github.event.head_commit.message }}"
-
+run-name: CI for "${{ github.event.pull_request.title || github.event.head_commit.message }}"
 on:
   push:
     branches: [main]
