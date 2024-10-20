@@ -259,6 +259,18 @@ public static class SnowflakeGeneratorBuilderExtensions
 }
 ```
 
+## Support
+
+If you need any help, please feel free to [create an issue with the "question" label][issues-ask].
+
+## Contributing
+
+Thank you for your interest in contributing to Snowflakes!
+
+Please see the [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+
+For security bugs and vulnerabilities, please see [SECURITY.md](SECURITY.md).
+
 [logo]: https://raw.githubusercontent.com/safakgur/snowflakes/main/media/logo-28.png "Logo"
 
 [wf-ci]: https://github.com/safakgur/snowflakes/actions/workflows/ci.yml "CI Workflow"
@@ -276,3 +288,5 @@ public static class SnowflakeGeneratorBuilderExtensions
 [instagram-sharding-and-ids]: https://instagram-engineering.com/sharding-ids-at-instagram-1cf5a71e5a5c "Sharding & IDs at Instagram"
 
 [dotnet-di-keyed]: https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection#keyed-services ".NET Dependency Injection"
+
+[issues-ask]: https://github.com/safakgur/snowflakes/issues/new?labels=question
