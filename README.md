@@ -78,6 +78,8 @@ Note that X Snowflake and Sonyflake components are also placed in different orde
 * X Snowflake will be sorted by timestamp -> instance ID -> sequence number
 * Sonyflake will be sorted by timestamp -> sequence number -> instance ID
 
+If you decide to use snowflakes, make sure you configure the generator based on _your system_'s requirements.
+Do not blindly copy one of the above configurations.
 
 ### Generating Snowflakes
 
@@ -101,9 +103,14 @@ This will make them shorter, which can be useful when they are used in URIs.
 // There are base 36, 62, and 64 encoders, all URI-safe.
 var encoder = SnowflakeEncoder.Base62;
 
-var snowflake = snowflakeGen.NewSnowflake(); // 139611368062976
-var encodedSnowflake = encoder.Encode(snowflake); // "ddw3cbIG"
-var decodedSnowflake = encoder.Decode(encodedSnowflake); // 139611368062976
+ // 139611368062976
+var snowflake = snowflakeGen.NewSnowflake();
+
+ // "ddw3cbIG
+var encodedSnowflake = encoder.Encode(snowflake);"
+
+ // 139611368062976
+var decodedSnowflake = encoder.Decode(encodedSnowflake);
 ```
 
 Make sure you decode the values back to `Int64` before sorting or persisting them.
@@ -134,7 +141,7 @@ services.AddSingleton(static serviceProvider =>
     return new SnowflakeGeneratorBuilder()
         .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider)
         .AddSequenceForTimestamp(8)
-        .AddConstant(16, instanceIndex)
+        .AddConstant(16, instanceId)
         .Build();
 });
 ```
