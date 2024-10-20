@@ -31,7 +31,7 @@
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageOutputPath>../artifacts/</PackageOutputPath>
-    <PackageTags>snowflake-id;snowflakes;distributed-id;distributed;id;identifier</PackageTags>
+    <PackageTags>snowflake-id;snowflake-twitter;distributed-id;distributed;id;id-generator</PackageTags>
   </PropertyGroup>
   
   <ItemGroup>
