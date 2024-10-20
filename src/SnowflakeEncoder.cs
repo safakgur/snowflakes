@@ -280,13 +280,16 @@ public sealed class SnowflakeEncoder
     /// <exception cref="FormatException">
     ///     <paramref name="encodedSnowflake" /> is in an invalid format.
     /// </exception>
+    /// <exception cref="OverflowException">
+    ///     The number <paramref name="encodedSnowflake" /> represents is bigger than
+    ///     <see cref="long.MaxValue" />.
+    /// </exception>
     public long Decode(string encodedSnowflake)
     {
         ArgumentNullException.ThrowIfNull(encodedSnowflake);
 
         if (encodedSnowflake.Length == 0)
             throw new FormatException("Empty encoded snowflake.");
-
 
         var result = 0L;
         var multiplier = 1L;
@@ -297,7 +300,7 @@ public sealed class SnowflakeEncoder
                 throw new FormatException(
                     $"Invalid character, '{encodedSnowflake[i]}' in encoded snowflake.");
 
-            result += digit * multiplier;
+            result = checked(result + (digit * multiplier));
             multiplier *= _digits.Length;
         }
 
