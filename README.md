@@ -116,8 +116,8 @@ var encoder = SnowflakeEncoder.Base62;
  // 139611368062976
 var snowflake = snowflakeGen.NewSnowflake();
 
- // "ddw3cbIG
-var encodedSnowflake = encoder.Encode(snowflake);"
+ // "ddw3cbIG"
+var encodedSnowflake = encoder.Encode(snowflake);
 
  // 139611368062976
 var decodedSnowflake = encoder.Decode(encodedSnowflake);
