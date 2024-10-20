@@ -1,6 +1,7 @@
 # Snowflakes ![Logo][logo]
 
 [![CI][wf-ci-badge]][wf-ci]
+[![CodeQL Advanced][wf-codeql-badge]][wf-codeql]
 [![NuGet][nuget-badge]][nuget]
 
 Snowflake IDs are 64-bit, sortable values that can be generated in a distributed system, ensuring uniqueness
@@ -259,8 +260,13 @@ public static class SnowflakeGeneratorBuilderExtensions
 ```
 
 [logo]: https://raw.githubusercontent.com/safakgur/snowflakes/main/media/logo-28.png "Logo"
+
 [wf-ci]: https://github.com/safakgur/snowflakes/actions/workflows/ci.yml "CI Workflow"
 [wf-ci-badge]: https://github.com/safakgur/snowflakes/actions/workflows/ci.yml/badge.svg?event=push "CI Badge"
+
+[wf-codeql]: https://github.com/safakgur/snowflakes/actions/workflows/codeql.yml
+[wf-codeql-badge]: https://github.com/safakgur/snowflakes/actions/workflows/codeql.yml/badge.svg?branch=main&event=push
+
 [nuget]: https://www.nuget.org/packages/Snowflakes/ "NuGet Gallery"
 [nuget-badge]: https://img.shields.io/nuget/v/Snowflakes.svg?style=flat "NuGet Badge"
 
