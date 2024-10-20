@@ -24,7 +24,7 @@ When you define the snowflake format for a system, consider the following:
 
 * **System lifetime:** Bigger timestamp length, later epoch, and lower precision mean higher lifetime.
 * **Instance count:** Bigger instance ID length means there can be more instances generating snowflakes.
-* **Generation rate:** Bigger sequence number length means the instance can generate more snowflakes per timestamp.
+* **Generation rate:** Bigger sequence length means an instance can generate more snowflakes per time.
 * **Ordering:** Components specified earlier occupy higher bits, meaning they are prioritized during sorting.
 
 ## How to Use
@@ -35,13 +35,18 @@ The following examples show how you can define your own snowflake format.
 
 #### X's Implementation
 
-41-bit timestamp in units of 1 ms elapsed since 2010-11-04T01:42:54.657Z  
+41-bit timestamp in milliseconds elapsed since X's epoch  
 10-bit instance ID  
 12-bit sequence number
 
 ```csharp
-var epoch = DateTimeOffset.FromUnixTimeMilliseconds(1288834974657); // X's epoch
-var instanceId = 0; // e.g., ordinal index of a K8 pod
+// X's epoch - 2010-11-04T01:42:54.657Z
+var epoch = DateTimeOffset.FromUnixTimeMilliseconds(1288834974657);
+
+// Set the instance ID, e.g., the ordinal index of a K8 pod.
+var instanceId = 0;
+
+// Create the generator.
 var snowflakeGen = new SnowflakeGeneratorBuilder()
     .AddTimestamp(41, epoch, TimeSpan.TicksPerMillisecond)
     .AddConstant(10, instanceId)
@@ -51,13 +56,18 @@ var snowflakeGen = new SnowflakeGeneratorBuilder()
 
 #### Sony's Implementation (Sonyflake)
 
-39-bit timestamp in units of 10 ms from a specified epoch  
+39-bit timestamp in units of 10 ms elapsed since a custom epoch  
 8-bit sequence number  
 16-bit instance ID
 
 ```csharp
-var epoch = new DateTimeOffset(2024, 8, 30, 0, 0, 0, TimeSpan.Zero); // e.g., when your system came online
-var instanceId = 0; // e.g., ordinal index of a K8 pod
+ // Choose an epoch, e.g., when your system came online. Epoch can't be in the future.
+var epoch = new DateTimeOffset(2024, 8, 30, 0, 0, 0, TimeSpan.Zero);
+
+// Set the instance ID, e.g., the ordinal index of a K8 pod.
+var instanceId = 0;
+
+// Create the generator.
 var snowflakeGen = new SnowflakeGeneratorBuilder()
     .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10) // 10 ms increments
     .AddSequenceForTimestamp(8)
