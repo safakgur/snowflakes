@@ -113,28 +113,23 @@ This will make them shorter, which can be useful when they are used in URIs.
 // There are base 36, 62, and 64 encoders, all URI-safe.
 var encoder = SnowflakeEncoder.Base62;
 
- // 139611368062976
-var snowflake = snowflakeGen.NewSnowflake();
-
- // "ddw3cbIG"
-var encodedSnowflake = encoder.Encode(snowflake);
-
- // 139611368062976
-var decodedSnowflake = encoder.Decode(encodedSnowflake);
+var snowflake = snowflakeGen.NewSnowflake(); // 139611368062976
+var encodedSnowflake = encoder.Encode(snowflake); // "ddw3cbIG"
+var decodedSnowflake = encoder.Decode(encodedSnowflake); // 139611368062976
 ```
 
 Make sure you decode the values back to `Int64` before sorting or persisting them.
 
 ### Dependency Injection
 
-The `SnowflakeGenerator` instance must be shared for the generated snowflakes to be unique.
-When using a DI container, a generator needs to be registered as a singleton.
+The `SnowflakeGenerator` instance must be shared for the generated snowflakes to be unique,
+so when using a DI container, a generator needs to be registered as a singleton.
 
 ```csharp
 services.AddSingleton(static serviceProvider =>
 {
     // A fixed epoch, specific to the system that will use the generated snowflakes.
-    // Do not change this value when you have snowflakes in the wild.
+    // Do not change this value once you have snowflakes in the wild.
     // The epoch must be earlier than the current time at the time of snowflake generation.
     var epoch = new DateTimeOffset(2024, 8, 30, 0, 0, 0, TimeSpan.Zero);
 
@@ -171,7 +166,10 @@ public class FooService(SnowflakeGenerator snowflakeGen)
 }
 ```
 
-### String Instance IDs
+
+### Advanced
+
+#### String Instance IDs
 
 There may be cases where you don't have access to an integer instance ID. Using Azure App Services, for example,
 we have no good way of obtaining an integer "index" of the instance, but we do have access to a string
@@ -208,6 +206,57 @@ The likelihood of collisions will depend on the chosen component length and hash
 
 If you can't supply a unique, integer instance ID that fits the component, you need to design your
 system to be able to tolerate the occasional duplicate snowflake.
+
+#### Custom Components
+
+The library already offers the standard timestamp, instance ID, and sequence number components,
+but it also allows you to create your own components by subclassing `SnowflakeComponent`.
+
+Below is an example custom component that provides random bits.
+
+```csharp
+public sealed class RandomSnowflakeComponent(int lengthInBits)
+    : SnowflakeComponent(lengthInBits)
+{
+    protected override long CalculateValue(SnowflakeGenerationContext ctx)
+    {
+        Span<byte> buffer = new byte[sizeof(long)];
+        RandomNumberGenerator.Fill(buffer);
+
+        return BinaryPrimitives.ReadInt64LittleEndian(buffer);
+    }
+}
+```
+
+You can configure a snowflake generator to use any `SnowflakeComponent` implementation.
+
+```csharp
+var epoch = new DateTimeOffset(2024, 10, 20, 14, 56, 0, TimeSpan.Zero);
+var snowflakgeGen = new SnowflakeGeneratorBuilder()
+    .AddTimestamp(30, epoch)
+    .Add(new RandomSnowflakeComponent(33)) // Here we add our custom component
+    .Build();
+
+// High 30 bits have milliseconds elapsed since `epoch` while low 33 bits are random.
+// Similar to a version 7 UUID, albeit smaller.
+var snowflake = snowflakgeGen.NewSnowflake();
+```
+
+If you're feeling fancy, you can also write an extension method for `SnowflakeGeneratorBuilder`
+to allow usage like `AddRandom(33)`.
+
+```csharp
+public static class SnowflakeGeneratorBuilderExtensions
+{
+    public static SnowflakeGeneratorBuilder AddRandom(
+        this SnowflakeGeneratorBuilder builder, int lengthInBits)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        return builder.Add(new RandomSnowflakeComponent(lengthInBits));
+    }
+}
+```
 
 [logo]: https://raw.githubusercontent.com/safakgur/snowflakes/main/media/logo-28.png "Logo"
 [wf-ci]: https://github.com/safakgur/snowflakes/actions/workflows/ci.yml "CI Workflow"
