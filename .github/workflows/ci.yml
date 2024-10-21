@@ -45,6 +45,12 @@ jobs:
             sleep .5
             printf "Changes:\n$src_changes"
             echo "src_changed=true" >> $GITHUB_ENV
+            {
+              echo src_changed=true
+              echo 'src_changes<<EOF'
+              echo $src_changes
+              echo 'EOF'
+            } >> $GITHUB_ENV
           else
             echo "No change in src/"
           fi
@@ -67,8 +73,11 @@ jobs:
 
             echo "::notice file=VERSION::A new NuGet package with the version $src_ver will be published."
           elif [ "${{ env.src_changed }}" == "true" ]; then
-            echo "::error file=VERSION::Source is different but the build version is unchanged."
-            exit 1
+            echo "::warning file=VERSION::Source changed but the build version is the same. No package will be published."
+          fi
+
+          if [ "${{ env.src_changed }}" == "true" ]; then
+            printf "::notice file=VERSION::Source changes:\n$src_changes"
           fi
       
       - name: Publish
