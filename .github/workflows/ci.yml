@@ -67,8 +67,7 @@ jobs:
 
             echo "::notice file=VERSION::A new NuGet package with the version $src_ver will be published."
           elif [ "${{ env.src_changed }}" == "true" ]; then
-            echo "::error file=VERSION::Source is different but the build version is unchanged."
-            exit 1
+            echo "::warning file=VERSION::Source changed since $latest_tag but the build version is the same. No package will be published."
           fi
       
       - name: Publish
