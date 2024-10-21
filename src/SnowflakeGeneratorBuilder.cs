@@ -11,6 +11,9 @@ public sealed class SnowflakeGeneratorBuilder
 
     private int _totalLengthInBits;
 
+    /// <summary>Initializes a new instance of the <see cref="SnowflakeGeneratorBuilder" /> class.</summary>
+    public SnowflakeGeneratorBuilder() { }
+
     /// <summary>Adds a timestamp component to the snowflakes that will be generated.</summary>
     /// <returns>A reference to the current builder instance.</returns>
     /// <exception cref="ArgumentException">
