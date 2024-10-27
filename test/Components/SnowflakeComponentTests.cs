@@ -73,6 +73,32 @@ public sealed class SnowflakeComponentTests
         Assert.Equal(2, component.LastValue);
     }
 
+    [Fact]
+    public void Owner_throws_when_set_to_null()
+    {
+        var component = new IncrementingTestSnowflakeComponent(lengthInBits: 10);
+
+        Assert.Throws<ArgumentNullException>("value", () => component.Owner = null);
+    }
+
+    [Fact]
+    public void Owner_throws_when_set_to_different_non_null_generator()
+    {
+        var gen1 = new SnowflakeGeneratorBuilder().AddConstant(1, 1).Build();
+        var gen2 = new SnowflakeGeneratorBuilder().AddConstant(1, 1).Build();
+
+        var component = new IncrementingTestSnowflakeComponent(lengthInBits: 10);
+        Assert.Null(component.Owner);
+
+        component.Owner = gen1;
+        Assert.Same(gen1, component.Owner);
+
+        component.Owner = gen1;
+        Assert.Same(gen1, component.Owner);
+
+        Assert.Throws<InvalidOperationException>(() => component.Owner = gen2);
+    }
+
     private sealed class IncrementingTestSnowflakeComponent(int lengthInBits, long startValue = 0L)
         : SnowflakeComponent(lengthInBits)
     {
