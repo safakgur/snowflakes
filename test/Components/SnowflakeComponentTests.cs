@@ -48,11 +48,25 @@ public sealed class SnowflakeComponentTests
     [InlineData(1, 0b_1011, 0b_0001)]
     public void GetValue_masks_value(int lengthInBits, long originalValue, long maskedValue)
     {
-        var component = new IncrementingTestSnowflakeComponent(lengthInBits, originalValue);
+        var component = new IncrementingTestSnowflakeComponent(
+            lengthInBits, originalValue, allowTruncation: true);
 
         var value = component.GetValue(new([component]));
 
         Assert.Equal(maskedValue, value);
+    }
+
+    [Fact]
+    public void GetValue_throws_when_calculated_value_is_out_of_range()
+    {
+        var component = new IncrementingTestSnowflakeComponent(
+            4, 0b_1110, allowTruncation: false);
+
+        var ctx = new SnowflakeGenerationContext([component]);
+
+        Assert.Equal(0b_1110, component.GetValue(ctx));
+        Assert.Equal(0b_1111, component.GetValue(ctx));
+        Assert.Throws<OverflowException>(() => component.GetValue(ctx));
     }
 
     [Fact]
@@ -99,10 +113,20 @@ public sealed class SnowflakeComponentTests
         Assert.Throws<InvalidOperationException>(() => component.Owner = gen2);
     }
 
-    private sealed class IncrementingTestSnowflakeComponent(int lengthInBits, long startValue = 0L)
-        : SnowflakeComponent(lengthInBits)
+    private sealed class IncrementingTestSnowflakeComponent : SnowflakeComponent
     {
-        protected override long CalculateValue(SnowflakeGenerationContext ctx) => startValue++;
+        private long _startValue;
+
+        public IncrementingTestSnowflakeComponent(
+            int lengthInBits, long startValue = 0L, bool allowTruncation = false)
+            : base(lengthInBits)
+        {
+            AllowTruncation = allowTruncation;
+
+            _startValue = startValue;
+        }
+
+        protected override long CalculateValue(SnowflakeGenerationContext ctx) => _startValue++;
     }
 
 }
