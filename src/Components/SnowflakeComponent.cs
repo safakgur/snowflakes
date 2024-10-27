@@ -10,7 +10,8 @@ namespace Snowflakes.Components;
 ///     <list type="bullet">
 ///         <item>
 ///             A component instance should only be supplied to a single generator as components
-///             may store state that should not be shared by different generators.
+///             may store state that should not be shared by different generators. An attempt to
+///             add the same component to multiple generators will result in an exception.
 ///         </item>
 ///         <item>
 ///             The generator ensures the components are executed in the correct order, which can
@@ -18,7 +19,7 @@ namespace Snowflakes.Components;
 ///         </item>
 ///         <item>
 ///             The generator ensures that no component is executed concurrently, so derived
-///             components do not need to be implemented in a thread-safe manner.
+///             components do not need to implement thread safety themselves.
 ///         </item>
 ///     </list>
 /// </remarks>
@@ -29,6 +30,9 @@ public abstract class SnowflakeComponent
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly long _mask;
+
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private SnowflakeGenerator? _owner;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="SnowflakeComponent" /> class.
@@ -72,6 +76,22 @@ public abstract class SnowflakeComponent
     ///     produced by a timestamp component) are executed in the correct order.
     /// </remarks>
     public int ExecutionOrder { get; init; }
+
+    /// <summary>Gets or sets the snowflake generator that owns this component.</summary>
+    /// <exception cref="ArgumentNullException">Value is null.</exception>
+    /// <exception cref="InvalidOperationException">Component already has an owner.</exception>
+    internal SnowflakeGenerator? Owner
+    {
+        get => _owner;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+
+            var original = Interlocked.CompareExchange(ref _owner, value, null);
+            if (original is not null && original != value)
+                throw new InvalidOperationException("A snowflake component cannot be used by multiple generators.");
+        }
+    }
 
     /// <summary>Produces the value that will be placed in a snowflake.</summary>
     /// <param name="ctx">

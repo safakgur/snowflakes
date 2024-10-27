@@ -36,6 +36,16 @@ public sealed class SnowflakeGeneratorTests
     }
 
     [Fact]
+    public void Ctor_sets_itself_as_owner_of_components()
+    {
+        var component = new ConstantSnowflakeComponent(1, 1);
+        Assert.Null(component.Owner);
+
+        var gen = new SnowflakeGenerator([component]);
+        Assert.Same(gen, component.Owner);
+    }
+
+    [Fact]
     public async Task NewSnowflake_synchronizes_access()
     {
         var timeProvider = TimeProvider.System;
