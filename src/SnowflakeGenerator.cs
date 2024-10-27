@@ -64,6 +64,16 @@ public sealed class SnowflakeGenerator
                 throw new ArgumentException(
                     "Component collection cannot contain duplicate items.", nameof(components));
 
+            try
+            {
+                component.Owner = this;
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new ArgumentException(
+                    "Component collection cannot contain another generator's components.", nameof(components), ex);
+            }
+
             _componentsInExecutionOrder[i] = (component, totalLengthInBits);
 
             totalLengthInBits += component.LengthInBits;
