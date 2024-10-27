@@ -275,7 +275,7 @@ public sealed class SnowflakeEncoder
     /// <param name="encodedSnowflake">The encoded snowflake to convert back.</param>
     /// <returns>The original snowflake that was encoded.</returns>
     /// <exception cref="ArgumentNullException">
-    ///     <paramref name="encodedSnowflake" />is null.
+    ///     <paramref name="encodedSnowflake" /> is null.
     /// </exception>
     /// <exception cref="FormatException">
     ///     <paramref name="encodedSnowflake" /> is in an invalid format.
