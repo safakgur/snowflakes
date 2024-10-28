@@ -72,4 +72,17 @@ public sealed class SequenceSnowflakeComponentTests
             return component.GetValue(ctx);
         }
     }
+
+    [Fact]
+    public void GetValue_throws_when_calculated_value_is_out_of_range()
+    {
+        var component = new SequenceSnowflakeComponent(lengthInBits: 1, refComponentIndex: 0);
+
+        var refComponent = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
+        var ctx = new SnowflakeGenerationContext([refComponent, component]);
+
+        Assert.Equal(0, component.GetValue(ctx));
+        Assert.Equal(1, component.GetValue(ctx));
+        Assert.Throws<OverflowException>(() => component.GetValue(ctx));
+    }
 }

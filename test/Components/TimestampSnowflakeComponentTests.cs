@@ -103,4 +103,24 @@ public sealed class TimestampSnowflakeComponentTests
         static DateTimeOffset GetTime(string timeOfDayString) =>
             DateTimeOffset.Parse($"2024-08-29T{timeOfDayString}+00:00");
     }
+
+    [Fact]
+    public void GetValue_throws_when_calculated_value_is_out_of_range()
+    {
+        var epoch = new DateTimeOffset(2024, 10, 27, 21, 58, 00, TimeSpan.Zero);
+
+        var testTimeProvider = Substitute.For<TimeProvider>();
+        testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(1));
+
+        var component = new TimestampSnowflakeComponent(
+            lengthInBits: 2, epoch, TimeSpan.TicksPerSecond, testTimeProvider);
+
+        var ctx = new SnowflakeGenerationContext([component]);
+
+        testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(3));
+        _ = component.GetValue(ctx);
+
+        testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(4));
+        Assert.Throws<OverflowException>(() => component.GetValue(ctx));
+    }
 }
