@@ -12,6 +12,7 @@ public sealed class SnowflakeGenerator
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly (SnowflakeComponent Component, int BitsToShiftLeft)[] _componentsInExecutionOrder;
 
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly SnowflakeGenerationContext _context;
 
     /// <summary>
@@ -101,6 +102,10 @@ public sealed class SnowflakeGenerator
 
     /// <summary>Generates a snowflake with the configured components.</summary>
     /// <returns>A non-negative 64-bit integer, sortable based on the configured components.</returns>
+    /// <exception cref="OverflowException">
+    ///     One of the components produced a value that exceeded the maximum number of bits it was
+    ///     configured to produce.
+    /// </exception>
     public long NewSnowflake()
     {
         var result = 0L;

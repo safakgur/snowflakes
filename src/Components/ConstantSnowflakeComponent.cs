@@ -24,6 +24,7 @@ public sealed class ConstantSnowflakeComponent : SnowflakeComponent
     {
         ArgumentOutOfRangeException.ThrowIfNegative(value);
 
+        AllowTruncation = true;
         Value = value;
     }
 
@@ -75,6 +76,7 @@ public sealed class ConstantSnowflakeComponent : SnowflakeComponent
             hash.Reverse();
         }
 
+        AllowTruncation = true;
         Value = BitConverter.ToInt64(hash);
         Value = Math.Abs(Value);
     }
