@@ -4,9 +4,9 @@
 [![CodeQL Advanced][wf-codeql-badge]][wf-codeql]
 [![NuGet][nuget-badge]][nuget]
 
-Snowflake IDs are 64-bit, sortable values that can be generated in a distributed system, ensuring uniqueness
-without a central authority. The format was [originally created by Twitter (now X)][twitter-announcement] and adopted
-by others like [Sony][sonyflake], [Discord][discord-snowflakes], [Instagram][instagram-sharding-and-ids], and more.
+Snowflake IDs are 64-bit, unique, sortable identifiers that can be generated in a distributed system
+without a central authority. The format was [originally created by Twitter (now X)][twitter-announcement]
+and adopted by others like [Sony][sonyflake], [Discord][discord-snowflakes], [Instagram][instagram-sharding-and-ids], and more.
 
 This .NET library lets you create customized snowflakes by configuring the components:
 timestamp, sequence, and instance ID.
@@ -167,8 +167,30 @@ public class FooService(SnowflakeGenerator snowflakeGen)
 }
 ```
 
-
 ### Advanced
+
+#### Blocking Timestamp Generation
+
+Standard snowflakes use a sequence number to prevent collisions when multiple snowflakes are
+generated in the same time unit. This library provides an additional snowflake component, called
+`BlockingTimestampSnowflakeComponent`, that provides an alternative to using sequence numbers.
+
+With blocking timestamps, calls to `NewSnowflake` will block the thread until the next timestamp
+unit is available, ensuring that no two snowflakes are generated with the same timestamp.
+This approach eliminates the need for a sequence component, simplifying the ID generation process.
+However, it can potentially slow down ID generation, especially under high load, as threads may
+frequently need to wait for the next timestamp unit to become available. On the upside, not having
+sequence numbers means more bits are available for the timestamp, allowing for smaller units.
+
+```csharp
+var gen = new SnowflakeGeneratorBuilder()
+    .AddBlockingTimestamp(44, epoch, TimeSpan.TicksPerMillisecond / 2)
+    .AddConstant(19, instanceId)
+    .Build();
+```
+
+The example above sets the timestamp to be 44 bits with half-millisecond precision, meaning it will
+have a 278-year lifetime and allow two snowflakes to be generated every millisecond.
 
 #### String Instance IDs
 
@@ -210,7 +232,7 @@ system to be able to tolerate the occasional duplicate snowflake.
 
 #### Custom Components
 
-The library already offers the standard timestamp, instance ID, and sequence number components,
+The library already offers the usual timestamp, instance ID, and sequence number components,
 but it also allows you to create your own components by subclassing `SnowflakeComponent`.
 
 Below is an example custom component that provides random bits.
@@ -221,7 +243,7 @@ public sealed class RandomSnowflakeComponent(int lengthInBits)
 {
     protected override long CalculateValue(SnowflakeGenerationContext ctx)
     {
-        Span<byte> buffer = new byte[sizeof(long)];
+        Span<byte> buffer = stackalloc byte[sizeof(long)];
         RandomNumberGenerator.Fill(buffer);
 
         return BinaryPrimitives.ReadInt64LittleEndian(buffer);
