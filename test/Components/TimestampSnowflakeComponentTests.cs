@@ -3,7 +3,7 @@ using Snowflakes.Components;
 
 namespace Snowflakes.Tests.Components;
 
-public sealed class TimestampSnowflakeComponentTests
+public class TimestampSnowflakeComponentTests
 {
     [Theory]
     [MemberData(nameof(SnowflakeComponentTests.LengthInBits_IsValid_Data), MemberType = typeof(SnowflakeComponentTests))]
@@ -11,13 +11,13 @@ public sealed class TimestampSnowflakeComponentTests
     {
         if (isValid)
         {
-            var component = new TimestampSnowflakeComponent(lengthInBits, epoch: default);
+            var component = Construct(lengthInBits, epoch: default);
             Assert.Equal(lengthInBits, component.LengthInBits);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
-                new TimestampSnowflakeComponent(lengthInBits, epoch: default));
+                Construct(lengthInBits, epoch: default));
         }
     }
 
@@ -35,44 +35,41 @@ public sealed class TimestampSnowflakeComponentTests
 
         if (isValid)
         {
-            var component = new TimestampSnowflakeComponent(
-                lengthInBits: 11, epoch, timeProvider: testTimeProvider);
-
+            var component = Construct(lengthInBits: 11, epoch, timeProvider: testTimeProvider);
             Assert.Equal(epoch, component.Epoch);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(epoch), () =>
-                new TimestampSnowflakeComponent(
-                    lengthInBits: 11, epoch, timeProvider: testTimeProvider));
+                Construct(lengthInBits: 11, epoch, timeProvider: testTimeProvider));
         }
     }
 
     [Theory]
-    [InlineData(0.9, false)]
-    [InlineData(1.0, true)]
-    public void Ctor_validates_ticksPerUnit(double ticksPerUnit, bool isValid)
+    [InlineData(0, false)]
+    [InlineData(1, true)]
+    public void Ctor_validates_ticksPerUnit(long ticksPerUnit, bool isValid)
     {
         if (isValid)
         {
-            var component = new TimestampSnowflakeComponent(lengthInBits: 10, epoch: default, ticksPerUnit);
+            var component = Construct(lengthInBits: 10, epoch: default, ticksPerUnit);
             Assert.Equal(ticksPerUnit, component.TicksPerUnit);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(ticksPerUnit), () =>
-                new TimestampSnowflakeComponent(lengthInBits: 10, epoch: default, ticksPerUnit));
+                Construct(lengthInBits: 10, epoch: default, ticksPerUnit));
         }
     }
 
     [Fact]
     public void Ctor_sets_TimeProvider_correctly()
     {
-        var component = new TimestampSnowflakeComponent(lengthInBits: 10, epoch: default);
+        var component = Construct(lengthInBits: 10, epoch: default);
         Assert.Same(TimeProvider.System, component.TimeProvider);
 
         var testTimeProvider = Substitute.For<TimeProvider>();
-        component = new TimestampSnowflakeComponent(
+        component = Construct(
             lengthInBits: 10, epoch: default, timeProvider: testTimeProvider);
 
         Assert.Same(testTimeProvider, component.TimeProvider);
@@ -84,7 +81,7 @@ public sealed class TimestampSnowflakeComponentTests
     public void GetValue_returns_correctly_calculated_timestamp(
         string epochTimeOfDayString,
         string nowTimeOfDayString,
-        double ticksPerUnit,
+        long ticksPerUnit,
         long expectedValue)
     {
         var epoch = GetTime(epochTimeOfDayString);
@@ -93,9 +90,7 @@ public sealed class TimestampSnowflakeComponentTests
         var testTimeProvider = Substitute.For<TimeProvider>();
         testTimeProvider.GetUtcNow().Returns(now);
 
-        var component = new TimestampSnowflakeComponent(
-            lengthInBits: 11, epoch, ticksPerUnit, testTimeProvider);
-
+        var component = Construct(lengthInBits: 11, epoch, ticksPerUnit, testTimeProvider);
         var value = component.GetValue(new([component]));
 
         Assert.Equal(expectedValue, value);
@@ -112,9 +107,7 @@ public sealed class TimestampSnowflakeComponentTests
         var testTimeProvider = Substitute.For<TimeProvider>();
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(1));
 
-        var component = new TimestampSnowflakeComponent(
-            lengthInBits: 2, epoch, TimeSpan.TicksPerSecond, testTimeProvider);
-
+        var component = Construct(lengthInBits: 2, epoch, TimeSpan.TicksPerSecond, testTimeProvider);
         var ctx = new SnowflakeGenerationContext([component]);
 
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(3));
@@ -123,4 +116,11 @@ public sealed class TimestampSnowflakeComponentTests
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(4));
         Assert.Throws<OverflowException>(() => component.GetValue(ctx));
     }
+
+    protected virtual TimestampSnowflakeComponent Construct(
+        int lengthInBits,
+        DateTimeOffset epoch,
+        long ticksPerUnit = TimeSpan.TicksPerMillisecond,
+        TimeProvider? timeProvider = null) =>
+        new(lengthInBits, epoch, ticksPerUnit, timeProvider);
 }
