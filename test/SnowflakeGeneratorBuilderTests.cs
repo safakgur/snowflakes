@@ -45,8 +45,11 @@ public sealed class SnowflakeGeneratorBuilderTests
         Assert.Same(_builder, result);
     }
 
-    [Fact]
-    public void AddTimestamp_creates_component_with_correct_properties()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AddTimestamp_and_AddBlockingTimestamp_create_components_with_correct_properties(
+        bool addBlockingTimestamp)
     {
         var random = new Random();
 
@@ -58,11 +61,15 @@ public sealed class SnowflakeGeneratorBuilderTests
         var testTimeProvider = Substitute.For<TimeProvider>();
         testTimeProvider.GetUtcNow().Returns(now);
 
-        var component = _builder
-            .AddTimestamp(lengthInBits, epoch, ticksPerUnit, testTimeProvider)
-            .Build().Components[0];
+        if (addBlockingTimestamp)
+            _builder.AddBlockingTimestamp(lengthInBits, epoch, ticksPerUnit, testTimeProvider);
+        else
+            _builder.AddTimestamp(lengthInBits, epoch, ticksPerUnit, testTimeProvider);
 
-        var tsComponent = Assert.IsType<TimestampSnowflakeComponent>(component);
+        var component = _builder.Build().Components[0];
+        var tsComponent = addBlockingTimestamp
+            ? Assert.IsType<BlockingTimestampSnowflakeComponent>(component)
+            : Assert.IsType<TimestampSnowflakeComponent>(component);
 
         Assert.Equal(lengthInBits, tsComponent.LengthInBits);
         Assert.Equal(epoch, tsComponent.Epoch);
@@ -113,6 +120,33 @@ public sealed class SnowflakeGeneratorBuilderTests
         Assert.Equal(expectedValue, constComponent.Value);
     }
 
+    [Fact]
+    public void AddSequenceForTimestamp_throws_when_no_timestamp_component_found()
+    {
+        _builder.AddConstant(lengthInBits: 1, value: 1);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            _builder.AddSequenceForTimestamp(lengthInBits: 1));
+    }
+
+    [Fact]
+    public void AddSequenceForTimestamp_ignores_blocking_timestamp_components()
+    {
+        _builder.AddBlockingTimestamp(lengthInBits: 1, epoch: default);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            _builder.AddSequenceForTimestamp(lengthInBits: 1));
+
+        var component = _builder
+            .AddTimestamp(lengthInBits: 1, epoch: default)
+            .AddSequenceForTimestamp(lengthInBits: 1)
+            .Build().Components[^1];
+
+        var seqComponent = Assert.IsType<SequenceSnowflakeComponent>(component);
+
+        Assert.Equal(1, seqComponent.ReferenceComponentIndex);
+    }
+
     [Theory]
     [InlineData(0, 1)]
     [InlineData(1, 3)]
@@ -141,6 +175,30 @@ public sealed class SnowflakeGeneratorBuilderTests
     }
 
     [Fact]
+    public void AddSequence_throws_when_index_is_out_of_range()
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            _builder.AddSequence(lengthInBits: 1, refComponentIndex: 0));
+
+        _builder.AddConstant(lengthInBits: 1, value: 1);
+
+        Assert.Throws<ArgumentOutOfRangeException>("refComponentIndex", () =>
+            _builder.AddSequence(lengthInBits: 1, refComponentIndex: -1));
+
+        Assert.Throws<ArgumentOutOfRangeException>("refComponentIndex", () =>
+            _builder.AddSequence(lengthInBits: 1, refComponentIndex: 1));
+    }
+
+    [Fact]
+    public void AddSequence_throws_when_reference_component_is_blocking_timestamp()
+    {
+        _builder.AddBlockingTimestamp(lengthInBits: 1, epoch: default);
+
+        Assert.Throws<ArgumentOutOfRangeException>("refComponentIndex", () =>
+            _builder.AddSequence(lengthInBits: 1, refComponentIndex: 0));
+    }
+
+    [Fact]
     public void AddSequence_creates_component_with_correct_properties()
     {
         var random = new Random();
@@ -148,7 +206,7 @@ public sealed class SnowflakeGeneratorBuilderTests
         var lengthInBits = random.Next(1, 10);
         var refComponentIndex = random.Next(1, 10);
 
-        for (var i = 0 + 1; i <= refComponentIndex; i++)
+        for (var i = 0; i <= refComponentIndex; i++)
             _builder.AddConstant(lengthInBits: 1, value: 0);
 
         var component = _builder
@@ -159,7 +217,6 @@ public sealed class SnowflakeGeneratorBuilderTests
 
         Assert.Equal(lengthInBits, seqComponent.LengthInBits);
         Assert.Equal(refComponentIndex, seqComponent.ReferenceComponentIndex);
-
     }
 
     [Fact]

@@ -1,7 +1,7 @@
 ﻿namespace Snowflakes.Components;
 
 /// <summary>Produces a timestamp to be placed in a snowflake.</summary>
-public sealed class TimestampSnowflakeComponent : SnowflakeComponent
+public class TimestampSnowflakeComponent : SnowflakeComponent
 {
     /// <summary>
     ///     Initializes a new instance of the <see cref="TimestampSnowflakeComponent" /> class.
@@ -44,11 +44,11 @@ public sealed class TimestampSnowflakeComponent : SnowflakeComponent
     public TimestampSnowflakeComponent(
         int lengthInBits,
         DateTimeOffset epoch,
-        double ticksPerUnit = TimeSpan.TicksPerMillisecond,
+        long ticksPerUnit = TimeSpan.TicksPerMillisecond,
         TimeProvider? timeProvider = null)
         : base(lengthInBits)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(ticksPerUnit, 1.0);
+        ArgumentOutOfRangeException.ThrowIfLessThan(ticksPerUnit, 1);
 
         TimeProvider = timeProvider ?? TimeProvider.System;
 
