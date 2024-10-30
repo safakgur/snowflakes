@@ -24,7 +24,7 @@ public sealed class BlockingTimestampSnowflakeComponentTests : TimestampSnowflak
         Assert.True(watchElapsed.TotalSeconds < 1.0);
 
         // So, we have a delay where we wait for a few seconds and change the current time (1 -> 2)
-        _ = new Timer(
+        using var timer = new Timer(
             callback: _ => testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(2)),
             state: null,
             dueTime: TimeSpan.FromSeconds(2.5),
