@@ -1,8 +1,22 @@
-﻿# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
 updates:
+  # App dependencies
   - package-ecosystem: nuget
-    directory: "/"
+    directory: /src/
     schedule:
       interval: daily
+    ignore:
+      - update-types: ["version-update:semver-major"]
+  # Test dependencies
+  - package-ecosystem: nuget
+    directory: /test/
+    schedule:
+      interval: weekly
+      day: saturday
+      time: 04:00
+      timezone: Europe/London
+    groups:
+      all-test:
+        patterns: ["*"]
