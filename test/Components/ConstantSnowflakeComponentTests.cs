@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using Snowflakes.Components;
+using Snowflakes.Resources;
 
 namespace Snowflakes.Tests.Components;
 
@@ -42,6 +43,7 @@ public sealed class ConstantSnowflakeComponentTests
 
     [Theory]
     [MemberData(nameof(SnowflakeComponentTests.LengthInBits_IsValid_Data), MemberType = typeof(SnowflakeComponentTests))]
+    [Obsolete(DeprecationMessages.HashedConstantComponent)]
     public void Hashing_ctor_validates_lengthInBits(int lengthInBits, bool isValid)
     {
         var valueToHash = Guid.NewGuid().ToString("n");
@@ -64,6 +66,7 @@ public sealed class ConstantSnowflakeComponentTests
     [InlineData("", typeof(ArgumentException))]
     [InlineData(" ", null)]
     [InlineData("A", null)]
+    [Obsolete(DeprecationMessages.HashedConstantComponent)]
     public void Hashing_ctor_validates_valueToHash(string? valueToHash, Type? exceptionType)
     {
         var lengthInBits = 10;
@@ -82,6 +85,7 @@ public sealed class ConstantSnowflakeComponentTests
     }
 
     [Fact]
+    [Obsolete(DeprecationMessages.HashedConstantComponent)]
     public void Hashing_ctor_validates_hashAlg()
     {
         var lengthInBits = 10;
@@ -92,6 +96,7 @@ public sealed class ConstantSnowflakeComponentTests
     }
 
     [Fact]
+    [Obsolete(DeprecationMessages.HashedConstantComponent)]
     public void Hashing_ctor_produces_expected_hash()
     {
         var lengthInBits = 63;
