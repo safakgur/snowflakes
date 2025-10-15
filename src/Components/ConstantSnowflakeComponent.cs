@@ -1,5 +1,7 @@
-﻿using System.Security.Cryptography;
+﻿using System.ComponentModel;
+using System.Security.Cryptography;
 using System.Text;
+using Snowflakes.Resources;
 
 namespace Snowflakes.Components;
 
@@ -58,6 +60,8 @@ public sealed class ConstantSnowflakeComponent : SnowflakeComponent
     /// <exception cref="ArgumentException">
     ///     <paramref name="valueToHash" /> is an empty string.
     /// </exception>
+    [Obsolete(DeprecationMessages.HashedConstantComponent)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public ConstantSnowflakeComponent(int lengthInBits, string valueToHash, HashAlgorithm hashAlg)
         : base(lengthInBits)
     {

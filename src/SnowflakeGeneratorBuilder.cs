@@ -1,5 +1,7 @@
-﻿using System.Security.Cryptography;
+﻿using System.ComponentModel;
+using System.Security.Cryptography;
 using Snowflakes.Components;
+using Snowflakes.Resources;
 
 namespace Snowflakes;
 
@@ -69,6 +71,8 @@ public sealed class SnowflakeGeneratorBuilder
     ///     Adding the component would make the total component length exceed 63 bits.
     /// </exception>
     /// <inheritdoc cref="ConstantSnowflakeComponent(int, string, HashAlgorithm)" />
+    [Obsolete(DeprecationMessages.HashedConstantComponent)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public SnowflakeGeneratorBuilder AddConstant(int lengthInBits, string valueToHash, HashAlgorithm hashAlg)
     {
         var component = new ConstantSnowflakeComponent(lengthInBits, valueToHash, hashAlg);
