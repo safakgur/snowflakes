@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
+using Snowflakes.Resources;
 
 namespace Snowflakes;
 
@@ -32,215 +34,69 @@ public sealed class SnowflakeEncoder
     }
 
     /// <summary>
-    ///     Gets an encoder that will convert a snowflake to its base 36 representation
-    ///     using 0-9 and A-Z (in this order) as digits.
+    ///     Gets an encoder that converts a snowflake to its uppercase base 36 representation, using
+    ///     the digit set: US-ASCII digits (0-9), and uppercase letters (A-Z).
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Values produced by this encoder are safe to use in URIs.
-    ///     </para>
-    ///     <list type="table">
-    ///         <listheader>
-    ///             <term>Integer</term>
-    ///             <description>Encoded</description>
-    ///         </listheader>
-    ///         <item>
-    ///             <term>0</term>
-    ///             <description>0</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>9</term>
-    ///             <description>9</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>10</term>
-    ///             <description>A</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>35</term>
-    ///             <description>Z</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>36</term>
-    ///             <description>10</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>46</term>
-    ///             <description>1A</description>
-    ///         </item>
-    ///     </list>
+    ///     This encoder expresses numeric values using a set of digits ordered by ASCII code point.
+    ///     It should not be confused with binary-to-text encoding of arbitrary bytes.
     /// </remarks>
-    public static SnowflakeEncoder Base36Upper { get; } =
+    public static SnowflakeEncoder Base36UpperOrdinal { get; } =
         new("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
+    /// <inheritdoc cref="Base36UpperOrdinal" />
+    [Obsolete(DeprecationMessages.BuiltInBase36UpperEncoding)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static SnowflakeEncoder Base36Upper => Base36UpperOrdinal;
+
     /// <summary>
-    ///     Gets an encoder that will convert a snowflake to its base 36 representation
-    ///     using 0-9 and a-z (in this order) as digits.
+    ///     Gets an encoder that converts a snowflake to its lowercase base 36 representation, using
+    ///     the digit set: US-ASCII digits (0-9), and lowercase letters (a-z).
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Values produced by this encoder are safe to use in URIs.
-    ///     </para>
-    ///     <list type="table">
-    ///         <listheader>
-    ///             <term>Integer</term>
-    ///             <description>Encoded</description>
-    ///         </listheader>
-    ///         <item>
-    ///             <term>0</term>
-    ///             <description>0</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>9</term>
-    ///             <description>9</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>10</term>
-    ///             <description>a</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>35</term>
-    ///             <description>z</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>36</term>
-    ///             <description>10</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>46</term>
-    ///             <description>1a</description>
-    ///         </item>
-    ///     </list>
+    ///     This encoder expresses numeric values using a set of digits ordered by ASCII code point.
+    ///     It should not be confused with binary-to-text encoding of arbitrary bytes.
     /// </remarks>
-    public static SnowflakeEncoder Base36Lower { get; } =
+    public static SnowflakeEncoder Base36LowerOrdinal { get; } =
         new("0123456789abcdefghijklmnopqrstuvwxyz");
 
-    /// <summary>
-    ///     Gets an encoder that will convert a snowflake to its base 62 representation
-    ///     using 0-9, A-Z, and a-z (in this order) as digits.
-    /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         Values produced by this encoder are safe to use in URIs.
-    ///     </para>
-    ///     <list type="table">
-    ///         <listheader>
-    ///             <term>Integer</term>
-    ///             <description>Encoded</description>
-    ///         </listheader>
-    ///         <item>
-    ///             <term>0</term>
-    ///             <description>0</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>9</term>
-    ///             <description>9</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>10</term>
-    ///             <description>A</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>35</term>
-    ///             <description>Z</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>36</term>
-    ///             <description>a</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>61</term>
-    ///             <description>z</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>62</term>
-    ///             <description>10</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>71</term>
-    ///             <description>19</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>72</term>
-    ///             <description>1A</description>
-    ///         </item>
-    ///     </list>
-    /// </remarks>
-    public static SnowflakeEncoder Base62 { get; } =
-        new("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+    /// <inheritdoc cref="Base36LowerOrdinal" />
+    [Obsolete(DeprecationMessages.BuiltInBase36LowerEncoding)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static SnowflakeEncoder Base36Lower => Base36LowerOrdinal;
 
     /// <summary>
-    ///     Gets an encoder that will convert a snowflake to its base 62 representation
-    ///     using -, 0-9, A-Z, _, and a-z  (in this order) as digits.
+    ///     Gets an encoder that converts a snowflake to its base 62 representation, using the digit
+    ///     set: US-ASCII digits (0-9), uppercase letters (A-Z), and lowercase letters (a-z).
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         Note that this encoder represents an integer identifier in a specific base using
-    ///         extra digits, similar to base 2 (binary digits: 0-1) and base 16 (hexadecimal
-    ///         digits: 0-9, A-F). It should not be confused with the binary-to-text encoding
-    ///         format that is also known as Base64. which is aimed to represent arbitrary
-    ///         bytes rather than being a custom-base representation of numbers.
-    ///     </para>
-    ///     <para>
-    ///         Values produced by this encoder are safe to use in URIs.
-    ///     </para>
-    ///     <list type="table">
-    ///         <listheader>
-    ///             <term>Integer</term>
-    ///             <description>Encoded</description>
-    ///         </listheader>
-    ///         <item>
-    ///             <term>0</term>
-    ///             <description>-</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>1</term>
-    ///             <description>0</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>10</term>
-    ///             <description>9</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>11</term>
-    ///             <description>A</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>36</term>
-    ///             <description>Z</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>37</term>
-    ///             <description>_</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>38</term>
-    ///             <description>a</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>63</term>
-    ///             <description>z</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>64</term>
-    ///             <description>0-</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>65</term>
-    ///             <description>00</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>74</term>
-    ///             <description>09</description>
-    ///         </item>
-    ///         <item>
-    ///             <term>75</term>
-    ///             <description>0A</description>
-    ///         </item>
-    ///     </list>
+    ///     This encoder expresses numeric values using a set of digits ordered by ASCII code point.
+    ///     It should not be confused with binary-to-text encoding of arbitrary bytes, such as base62.
     /// </remarks>
-    public static SnowflakeEncoder Base64Snow { get; } =
+    public static SnowflakeEncoder Base62Ordinal { get; } =
+        new("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+
+    /// <inheritdoc cref="Base62Ordinal" />
+    [Obsolete(DeprecationMessages.BuiltInBase62Encoding)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static SnowflakeEncoder Base62 => Base62Ordinal;
+
+    /// <summary>
+    ///     Gets an encoder that converts a snowflake to its URI-safe base 64 representation,
+    ///     using the digit set: US-ASCII hyphen (-), digits (0-9), uppercase letters (A-Z),
+    ///     underscore (_), and lowercase letters (a-z).
+    /// </summary>
+    /// <remarks>
+    ///     This encoder expresses numeric values using a set of digits ordered by ASCII code point.
+    ///     It should not be confused with binary-to-text encoding of arbitrary bytes, such as base64.
+    /// </remarks>
+    public static SnowflakeEncoder Base64Ordinal { get; } =
         new("-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz");
+
+    /// <inheritdoc cref="Base64Ordinal" />
+    [Obsolete(DeprecationMessages.BuiltInBase64Encoding)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static SnowflakeEncoder Base64Snow => Base64Ordinal;
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private string DebuggerDisplay => $"Base ({_digits.Length}): {_digits}";
