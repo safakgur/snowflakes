@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using NSubstitute;
 using Snowflakes.Components;
+using Snowflakes.Resources;
 
 namespace Snowflakes.Tests;
 
@@ -98,6 +99,7 @@ public sealed class SnowflakeGeneratorBuilderTests
     [Theory]
     [InlineData("MD5", 2353163291832495564L)]
     [InlineData("SHA256", 8069623936395563335L)]
+    [Obsolete(DeprecationMessages.HashedConstantComponent)]
     public void AddConstant_valueToHash_creates_component_with_correct_properties(
         string algName, long expectedValue)
     {

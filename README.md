@@ -192,44 +192,6 @@ var gen = new SnowflakeGeneratorBuilder()
 The example above sets the timestamp to be 44 bits with half-millisecond precision, meaning it will
 have a 278-year lifetime and allow two snowflakes to be generated every millisecond.
 
-#### String Instance IDs
-
-There may be cases where you don't have access to an integer instance ID. Using Azure App Services, for example,
-we have no good way of obtaining an integer "index" of the instance, but we do have access to a string
-(exposed via the `WEBSITE_INSTANCE_ID` environment variable) that uniquely identifies it.
-
-For scenarios like this, `AddConstant` has a hashing overload that can create a reasonably high-cardinality value.
-Below is an alternative service registration example showing the use of this overload.
-
-```csharp
-services.AddSingleton(static serviceProvider =>
-{
-    var epoch = new DateTimeOffset(2024, 8, 30, 0, 0, 0, TimeSpan.Zero);
-
-    // This time, we have a string instance ID, which means we need to hash it to get a value that
-    // fits in the number of bits we have available.
-    var programOpts = serviceProvider.GetRequiredService<IOptions<ProgramOptions>>().Value;
-    var instanceId = programOpts.InstanceId;
-
-    // Pick a good algorithm for the hash. Speed is not a concern as this will only run once on
-    // application startup.
-    using var instanceIdHashAlg = SHA512.Create();
-
-    // The generator below uses the Sonyflake configuration.
-    return new SnowflakeGeneratorBuilder()
-        .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider)
-        .AddSequenceForTimestamp(8)
-        .AddConstant(16, instanceId, instanceIdHashAlg) // ...passing the hash algorithm.
-        .Build();
-});
-```
-
-**Important:** Uniqueness can't be guaranteed with this approach due to the possibility of hash collisions.
-The likelihood of collisions will depend on the chosen component length and hash algorithm.
-
-If you can't supply a unique, integer instance ID that fits the component, you need to design your
-system to be able to tolerate the occasional duplicate snowflake.
-
 #### Custom Components
 
 The library already offers the usual timestamp, instance ID, and sequence number components,
