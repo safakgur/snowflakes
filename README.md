@@ -112,7 +112,7 @@ This will make them shorter, which can be useful when they are used in URIs.
 
 ```csharp
 // There are base 36, 62, and 64 encoders, all URI-safe.
-var encoder = SnowflakeEncoder.Base62;
+var encoder = SnowflakeEncoder.Base62Ordinal;
 
 var snowflake = snowflakeGen.NewSnowflake(); // 139611368062976
 var encodedSnowflake = encoder.Encode(snowflake); // "ddw3cbIG"
