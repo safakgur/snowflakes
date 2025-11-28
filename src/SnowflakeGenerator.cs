@@ -1,5 +1,11 @@
 ﻿using System.Diagnostics;
 using Snowflakes.Components;
+using Lock =
+#if NET9_0_OR_GREATER
+    System.Threading.Lock;
+#else
+    System.Object;
+#endif
 
 namespace Snowflakes;
 
@@ -7,7 +13,7 @@ namespace Snowflakes;
 public sealed class SnowflakeGenerator
 {
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private readonly object _syncRoot = new();
+    private readonly Lock _syncRoot = new();
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly (SnowflakeComponent Component, int BitsToShiftLeft)[] _componentsInExecutionOrder;

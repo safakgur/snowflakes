@@ -69,7 +69,7 @@ public sealed class SnowflakeGeneratorTests
         };
 
         // Wait enough time for both runs to complete execute until the blocking component.
-        await Task.Delay(safeDuration);
+        await Task.Delay(safeDuration, TestContext.Current.CancellationToken);
 
         // We started two tasks and the counting component gets executed before the blocking
         // component, so the count being 1 instead of 2 would prove that the generator also

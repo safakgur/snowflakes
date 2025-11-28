@@ -29,7 +29,29 @@ jobs:
         run: dotnet build --no-restore -c Release
 
       - name: Run tests
-        run: dotnet test --no-build -c Release
+        run: >
+          dotnet test --no-build -c Release
+          --coverage --coverage-output-format cobertura --coverage-output coverage.cobertura.xml
+
+      - name: Create test coverage report
+        uses: danielpalme/ReportGenerator-GitHub-Action@v5
+        with:
+          reports: test/**/coverage.cobertura.xml
+          targetdir: artifacts/coverage
+          reporttypes: textsummary;htmlinline;cobertura
+          toolpath: tools/reportgenerator
+
+      - name: Print test coverage report
+        run: |
+          lineCov=$(grep "Line coverage" artifacts/coverage/Summary.txt | awk '{print $3}')
+          branchCov=$(grep "Branch coverage" artifacts/coverage/Summary.txt | awk '{print $3}')
+          echo "::notice::Line coverage: $lineCov, Branch coverage: $branchCov"
+
+      - name: Upload test coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-coverage
+          path: artifacts/coverage
 
       - name: Check for changes in src/ # Fails if there is no tag.
         id: check-changes
