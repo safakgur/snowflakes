@@ -12,13 +12,13 @@ public sealed class ConstantSnowflakeComponentTests
     {
         if (isValid)
         {
-            var component = new ConstantSnowflakeComponent(lengthInBits, value: 0L);
+            var component = new ConstantSnowflakeComponent<long>(lengthInBits, value: 0L);
             Assert.Equal(lengthInBits, component.LengthInBits);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
-                new ConstantSnowflakeComponent(lengthInBits, value: 0L));
+                new ConstantSnowflakeComponent<long>(lengthInBits, value: 0L));
         }
     }
 
@@ -31,13 +31,13 @@ public sealed class ConstantSnowflakeComponentTests
     {
         if (isValid)
         {
-            var component = new ConstantSnowflakeComponent(lengthInBits: 10, value);
+            var component = new ConstantSnowflakeComponent<long>(lengthInBits: 10, value);
             Assert.Equal(value, component.Value);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(value), () =>
-                new ConstantSnowflakeComponent(lengthInBits: 10, value: value));
+                new ConstantSnowflakeComponent<long>(lengthInBits: 10, value: value));
         }
     }
 
@@ -51,13 +51,13 @@ public sealed class ConstantSnowflakeComponentTests
 
         if (isValid)
         {
-            var component = new ConstantSnowflakeComponent(lengthInBits, valueToHash, hashAlg);
+            var component = new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash, hashAlg);
             Assert.Equal(lengthInBits, component.LengthInBits);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
-                new ConstantSnowflakeComponent(lengthInBits, valueToHash, hashAlg));
+                new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash, hashAlg));
         }
     }
 
@@ -74,12 +74,12 @@ public sealed class ConstantSnowflakeComponentTests
 
         if (exceptionType is null)
         {
-            _ = new ConstantSnowflakeComponent(lengthInBits, valueToHash!, hashAlg);
+            _ = new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash!, hashAlg);
             return;
         }
 
         var ex = Assert.Throws(exceptionType, () =>
-            new ConstantSnowflakeComponent(lengthInBits, valueToHash!, hashAlg));
+            new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash!, hashAlg));
 
         Assert.Equal(nameof(valueToHash), (ex as ArgumentException)!.ParamName);
     }
@@ -92,7 +92,7 @@ public sealed class ConstantSnowflakeComponentTests
         var valueToHash = Guid.NewGuid().ToString("n");
 
         Assert.Throws<ArgumentNullException>("hashAlg", () =>
-            new ConstantSnowflakeComponent(lengthInBits, valueToHash!, hashAlg: null!));
+            new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash!, hashAlg: null!));
     }
 
     [Fact]
@@ -105,12 +105,12 @@ public sealed class ConstantSnowflakeComponentTests
         var expectedSHA256Hash = 8069623936395563335L;
 
         using var md5HashAlg = MD5.Create();
-        var component = new ConstantSnowflakeComponent(lengthInBits, valueToHash, md5HashAlg);
+        var component = new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash, md5HashAlg);
         var value = component.GetValue(new([component]));
         Assert.Equal(expectedMD5Hash, value);
 
         using var sha256HashAlg = SHA256.Create();
-        component = new ConstantSnowflakeComponent(lengthInBits, valueToHash, sha256HashAlg);
+        component = new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash, sha256HashAlg);
         value = component.GetValue(new([component]));
         Assert.Equal(expectedSHA256Hash, value);
     }
@@ -120,7 +120,7 @@ public sealed class ConstantSnowflakeComponentTests
     [InlineData(1)]
     public void GetValue_returns_correct_value(long value)
     {
-        var component = new ConstantSnowflakeComponent(lengthInBits: 10, value: value);
+        var component = new ConstantSnowflakeComponent<long>(lengthInBits: 10, value: value);
 
         Assert.Equal(value, component.GetValue(new([component])));
     }

@@ -10,13 +10,13 @@ public sealed class SequenceSnowflakeComponentTests
     {
         if (isValid)
         {
-            var component = new SequenceSnowflakeComponent(lengthInBits, refComponentIndex: 0);
+            var component = new SequenceSnowflakeComponent<long>(lengthInBits, refComponentIndex: 0);
             Assert.Equal(lengthInBits, component.LengthInBits);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
-                new SequenceSnowflakeComponent(lengthInBits, refComponentIndex: 0));
+                new SequenceSnowflakeComponent<long>(lengthInBits, refComponentIndex: 0));
         }
     }
 
@@ -31,20 +31,20 @@ public sealed class SequenceSnowflakeComponentTests
     {
         if (isValid)
         {
-            var component = new SequenceSnowflakeComponent(lengthInBits, refComponentIndex);
+            var component = new SequenceSnowflakeComponent<long>(lengthInBits, refComponentIndex);
             Assert.Equal(refComponentIndex, component.ReferenceComponentIndex);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(refComponentIndex), () =>
-                new SequenceSnowflakeComponent(lengthInBits, refComponentIndex));
+                new SequenceSnowflakeComponent<long>(lengthInBits, refComponentIndex));
         }
     }
 
     [Fact]
     public void GetValue_returns_correcly_incremented_and_reset_sequence()
     {
-        var component = new SequenceSnowflakeComponent(lengthInBits: 4, refComponentIndex: 0);
+        var component = new SequenceSnowflakeComponent<long>(lengthInBits: 4, refComponentIndex: 0);
 
         // First
         var value = GetValueForRefComponentValue(0);
@@ -64,8 +64,8 @@ public sealed class SequenceSnowflakeComponentTests
 
         long GetValueForRefComponentValue(int refComponentValue)
         {
-            var refComponent = new ConstantSnowflakeComponent(lengthInBits: 10, value: refComponentValue);
-            var ctx = new SnowflakeGenerationContext([refComponent, component]);
+            var refComponent = new ConstantSnowflakeComponent<long>(lengthInBits: 10, value: refComponentValue);
+            var ctx = new SnowflakeGenerationContext<long>([refComponent, component]);
 
             _ = refComponent.GetValue(ctx);
 
@@ -76,10 +76,10 @@ public sealed class SequenceSnowflakeComponentTests
     [Fact]
     public void GetValue_throws_when_calculated_value_is_out_of_range()
     {
-        var component = new SequenceSnowflakeComponent(lengthInBits: 1, refComponentIndex: 0);
+        var component = new SequenceSnowflakeComponent<long>(lengthInBits: 1, refComponentIndex: 0);
 
-        var refComponent = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
-        var ctx = new SnowflakeGenerationContext([refComponent, component]);
+        var refComponent = new ConstantSnowflakeComponent<long>(lengthInBits: 1, value: 1);
+        var ctx = new SnowflakeGenerationContext<long>([refComponent, component]);
 
         Assert.Equal(0, component.GetValue(ctx));
         Assert.Equal(1, component.GetValue(ctx));

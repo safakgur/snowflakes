@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 using Snowflakes.Components;
 using Lock =
 #if NET9_0_OR_GREATER
@@ -10,19 +11,20 @@ using Lock =
 namespace Snowflakes;
 
 /// <summary>Generates 64-bit Snowflake IDs, also known as snowflakes.</summary>
-public sealed class SnowflakeGenerator
+public sealed class SnowflakeGenerator<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly Lock _syncRoot = new();
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private readonly (SnowflakeComponent Component, int BitsToShiftLeft)[] _componentsInExecutionOrder;
+    private readonly (SnowflakeComponent<T> Component, int BitsToShiftLeft)[] _componentsInExecutionOrder;
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private readonly SnowflakeGenerationContext _context;
+    private readonly SnowflakeGenerationContext<T> _context;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="SnowflakeGenerator" /> class with the
+    ///     Initializes a new instance of the <see cref="SnowflakeGenerator{T}" /> class with the
     ///     specified components.
     /// </summary>
     /// <param name="components">
@@ -46,7 +48,7 @@ public sealed class SnowflakeGenerator
     ///     <paramref name="components" /> is empty, contains a null item, contains duplicate items,
     ///     or the sum of its items' lengths exceeds 63 bits.
     /// </exception>
-    public SnowflakeGenerator(IEnumerable<SnowflakeComponent> components)
+    public SnowflakeGenerator(IEnumerable<SnowflakeComponent<T>> components)
     {
         ArgumentNullException.ThrowIfNull(components);
 
@@ -56,9 +58,9 @@ public sealed class SnowflakeGenerator
             throw new ArgumentException(
                 "At least one component is required.", nameof(components));
 
-        _componentsInExecutionOrder = new (SnowflakeComponent Component, int)[inInsertionOrder.Length];
+        _componentsInExecutionOrder = new (SnowflakeComponent<T> Component, int)[inInsertionOrder.Length];
 
-        var set = new HashSet<SnowflakeComponent>();
+        var set = new HashSet<SnowflakeComponent<T>>();
         var totalLengthInBits = 0;
         var needsSort = false;
         for (var i = inInsertionOrder.Length - 1; i >= 0; i--)
@@ -89,9 +91,9 @@ public sealed class SnowflakeGenerator
                 needsSort = true;
         }
 
-        if (totalLengthInBits > SnowflakeComponent.MaxLengthInBits)
+        if (totalLengthInBits > SnowflakeComponent<T>.MaxLengthInBits)
             throw new ArgumentException(
-                $"Total number of bits produced by the components cannot exceed {SnowflakeComponent.MaxLengthInBits}.",
+                $"Total number of bits produced by the components cannot exceed {SnowflakeComponent<T>.MaxLengthInBits}.",
                 nameof(components));
 
         if (needsSort)
@@ -104,7 +106,7 @@ public sealed class SnowflakeGenerator
     /// <summary>
     ///     Gets the components to produce the parts that make up the generated snowflakes.
     /// </summary>
-    public ReadOnlySpan<SnowflakeComponent> Components => _context.Components;
+    public ReadOnlySpan<SnowflakeComponent<T>> Components => _context.Components;
 
     /// <summary>Generates a snowflake with the configured components.</summary>
     /// <returns>A non-negative 64-bit integer, sortable based on the configured components.</returns>
@@ -112,9 +114,9 @@ public sealed class SnowflakeGenerator
     ///     One of the components produced a value that exceeded the maximum number of bits it was
     ///     configured to produce.
     /// </exception>
-    public long NewSnowflake()
+    public T NewSnowflake()
     {
-        var result = 0L;
+        var result = T.Zero;
 
         lock (_syncRoot)
             foreach (var (component, bitsToShiftLeft) in _componentsInExecutionOrder)

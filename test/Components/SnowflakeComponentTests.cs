@@ -62,7 +62,7 @@ public sealed class SnowflakeComponentTests
         var component = new IncrementingTestSnowflakeComponent(
             4, 0b_1110, allowTruncation: false);
 
-        var ctx = new SnowflakeGenerationContext([component]);
+        var ctx = new SnowflakeGenerationContext<long>([component]);
 
         Assert.Equal(0b_1110, component.GetValue(ctx));
         Assert.Equal(0b_1111, component.GetValue(ctx));
@@ -98,8 +98,8 @@ public sealed class SnowflakeComponentTests
     [Fact]
     public void Owner_throws_when_set_to_different_non_null_generator()
     {
-        var gen1 = new SnowflakeGeneratorBuilder().AddConstant(1, 1).Build();
-        var gen2 = new SnowflakeGeneratorBuilder().AddConstant(1, 1).Build();
+        var gen1 = new SnowflakeGeneratorBuilder<long>().AddConstant(1, 1).Build();
+        var gen2 = new SnowflakeGeneratorBuilder<long>().AddConstant(1, 1).Build();
 
         var component = new IncrementingTestSnowflakeComponent(lengthInBits: 10);
         Assert.Null(component.Owner);
@@ -113,7 +113,7 @@ public sealed class SnowflakeComponentTests
         Assert.Throws<InvalidOperationException>(() => component.Owner = gen2);
     }
 
-    private sealed class IncrementingTestSnowflakeComponent : SnowflakeComponent
+    private sealed class IncrementingTestSnowflakeComponent : SnowflakeComponent<long>
     {
         private long _startValue;
 
@@ -126,7 +126,7 @@ public sealed class SnowflakeComponentTests
             _startValue = startValue;
         }
 
-        protected override long CalculateValue(SnowflakeGenerationContext ctx) => _startValue++;
+        protected override long CalculateValue(SnowflakeGenerationContext<long> ctx) => _startValue++;
     }
 
 }
