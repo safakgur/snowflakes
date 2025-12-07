@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using Snowflakes.Resources;
@@ -6,22 +7,24 @@ using Snowflakes.Resources;
 namespace Snowflakes.Components;
 
 /// <summary>Provides a fixed value to be placed in a snowflake.</summary>
-public sealed class ConstantSnowflakeComponent : SnowflakeComponent
+/// <typeparam name="T">The snowflake type.</typeparam>
+public sealed class ConstantSnowflakeComponent<T> : SnowflakeComponent<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ConstantSnowflakeComponent" /> class
+    ///     Initializes a new instance of the <see cref="ConstantSnowflakeComponent{T}" /> class
     ///     that provides the specified value..
     /// </summary>
     /// <param name="lengthInBits">
-    ///     <inheritdoc cref="SnowflakeComponent.SnowflakeComponent" path="/param[@name='lengthInBits']" />
+    ///     <inheritdoc cref="SnowflakeComponent{T}.SnowflakeComponent" path="/param[@name='lengthInBits']" />
     /// </param>
     /// <param name="value">The value that will be provided by this component.</param>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///     <inheritdoc cref="SnowflakeComponent.SnowflakeComponent" path="/exception[@cref='ArgumentOutOfRangeException']"/>
+    ///     <inheritdoc cref="SnowflakeComponent{T}.SnowflakeComponent" path="/exception[@cref='ArgumentOutOfRangeException']"/>
     ///     -or-
     ///     <paramref name="value"/> is negative.
     /// </exception>
-    public ConstantSnowflakeComponent(int lengthInBits, long value)
+    public ConstantSnowflakeComponent(int lengthInBits, T value)
         : base(lengthInBits)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(value);
@@ -31,11 +34,11 @@ public sealed class ConstantSnowflakeComponent : SnowflakeComponent
     }
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="ConstantSnowflakeComponent" /> class
+    ///     Initializes a new instance of the <see cref="ConstantSnowflakeComponent{T}" /> class
     ///     that provides a (up to 63-bit) hash of the specified string.
     /// </summary>
     /// <param name="lengthInBits">
-    ///     <inheritdoc cref="SnowflakeComponent(int)" path="/param[@name='lengthInBits']" />
+    ///     <inheritdoc cref="SnowflakeComponent{T}(int)" path="/param[@name='lengthInBits']" />
     /// </param>
     /// <param name="valueToHash">The string value to be hashed to produce the fixed value.</param>
     /// <param name="hashAlg">The hash algorithm used to hash the string value.</param>
@@ -81,18 +84,21 @@ public sealed class ConstantSnowflakeComponent : SnowflakeComponent
         }
 
         AllowTruncation = true;
-        Value = BitConverter.ToInt64(hash);
-        Value = Math.Abs(Value);
+
+        var isUnsigned = T.MinValue == T.Zero;
+        Value = T.Abs(BitConverter.IsLittleEndian
+            ? T.ReadLittleEndian(hash, isUnsigned)
+            : T.ReadBigEndian(hash, isUnsigned));
     }
 
     /// <summary>Gets the value that will be provided by this component.</summary>
     /// <remarks>
-    ///     Note that <see cref="SnowflakeComponent.GetValue" /> masks this value to get only the
-    ///     lowest <see cref="SnowflakeComponent.LengthInBits" /> number of bits. Any higher bits,
+    ///     Note that <see cref="SnowflakeComponent{T}.GetValue" /> masks this value to get only the
+    ///     lowest <see cref="SnowflakeComponent{T}.LengthInBits" /> number of bits. Any higher bits,
     ///     i.e., bits to the left, are discarded.
     /// </remarks>
-    public long Value { get; }
+    public T Value { get; }
 
     /// <inheritdoc />
-    protected override long CalculateValue(SnowflakeGenerationContext ctx) => Value;
+    protected override T CalculateValue(SnowflakeGenerationContext<T> ctx) => Value;
 }

@@ -7,7 +7,7 @@ namespace Snowflakes.Tests;
 
 public sealed class SnowflakeGeneratorBuilderTests
 {
-    private readonly SnowflakeGeneratorBuilder _builder = new();
+    private readonly SnowflakeGeneratorBuilder<long> _builder = new();
 
     [Fact]
     public void Add_throws_when_component_is_null()
@@ -18,7 +18,7 @@ public sealed class SnowflakeGeneratorBuilderTests
     [Fact]
     public void Add_throws_when_component_is_already_added()
     {
-        var component = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
+        var component = new ConstantSnowflakeComponent<long>(lengthInBits: 1, value: 1);
 
         _builder.Add(component);
 
@@ -28,8 +28,8 @@ public sealed class SnowflakeGeneratorBuilderTests
     [Fact]
     public void Add_throws_when_component_is_too_big()
     {
-        var component63 = new ConstantSnowflakeComponent(lengthInBits: 63, value: 1);
-        var component1 = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
+        var component63 = new ConstantSnowflakeComponent<long>(lengthInBits: 63, value: 1);
+        var component1 = new ConstantSnowflakeComponent<long>(lengthInBits: 1, value: 1);
 
         _builder.Add(component63);
 
@@ -39,7 +39,7 @@ public sealed class SnowflakeGeneratorBuilderTests
     [Fact]
     public void Add_returns_current_instance()
     {
-        var component = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
+        var component = new ConstantSnowflakeComponent<long>(lengthInBits: 1, value: 1);
 
         var result = _builder.Add(component);
 
@@ -69,8 +69,8 @@ public sealed class SnowflakeGeneratorBuilderTests
 
         var component = _builder.Build().Components[0];
         var tsComponent = addBlockingTimestamp
-            ? Assert.IsType<BlockingTimestampSnowflakeComponent>(component)
-            : Assert.IsType<TimestampSnowflakeComponent>(component);
+            ? Assert.IsType<BlockingTimestampSnowflakeComponent<long>>(component)
+            : Assert.IsType<TimestampSnowflakeComponent<long>>(component);
 
         Assert.Equal(lengthInBits, tsComponent.LengthInBits);
         Assert.Equal(epoch, tsComponent.Epoch);
@@ -90,7 +90,7 @@ public sealed class SnowflakeGeneratorBuilderTests
             .AddConstant(lengthInBits, value)
             .Build().Components[0];
 
-        var constComponent = Assert.IsType<ConstantSnowflakeComponent>(component);
+        var constComponent = Assert.IsType<ConstantSnowflakeComponent<long>>(component);
 
         Assert.Equal(lengthInBits, constComponent.LengthInBits);
         Assert.Equal(value, constComponent.Value);
@@ -116,7 +116,7 @@ public sealed class SnowflakeGeneratorBuilderTests
             .AddConstant(lengthInBits, valueToHash, hashAlg)
             .Build().Components[0];
 
-        var constComponent = Assert.IsType<ConstantSnowflakeComponent>(component);
+        var constComponent = Assert.IsType<ConstantSnowflakeComponent<long>>(component);
 
         Assert.Equal(lengthInBits, constComponent.LengthInBits);
         Assert.Equal(expectedValue, constComponent.Value);
@@ -144,7 +144,7 @@ public sealed class SnowflakeGeneratorBuilderTests
             .AddSequenceForTimestamp(lengthInBits: 1)
             .Build().Components[^1];
 
-        var seqComponent = Assert.IsType<SequenceSnowflakeComponent>(component);
+        var seqComponent = Assert.IsType<SequenceSnowflakeComponent<long>>(component);
 
         Assert.Equal(1, seqComponent.ReferenceComponentIndex);
     }
@@ -170,7 +170,7 @@ public sealed class SnowflakeGeneratorBuilderTests
         _builder.AddSequenceForTimestamp(lengthInBits);
 
         var component = _builder.Build().Components[^1];
-        var seqComponent = Assert.IsType<SequenceSnowflakeComponent>(component);
+        var seqComponent = Assert.IsType<SequenceSnowflakeComponent<long>>(component);
 
         Assert.Equal(lengthInBits, seqComponent.LengthInBits);
         Assert.Equal(tsComponentIndex, seqComponent.ReferenceComponentIndex);
@@ -215,7 +215,7 @@ public sealed class SnowflakeGeneratorBuilderTests
             .AddSequence(lengthInBits, refComponentIndex)
             .Build().Components[^1];
 
-        var seqComponent = Assert.IsType<SequenceSnowflakeComponent>(component);
+        var seqComponent = Assert.IsType<SequenceSnowflakeComponent<long>>(component);
 
         Assert.Equal(lengthInBits, seqComponent.LengthInBits);
         Assert.Equal(refComponentIndex, seqComponent.ReferenceComponentIndex);
@@ -236,16 +236,16 @@ public sealed class SnowflakeGeneratorBuilderTests
             .Build();
 
         Assert.Equal(2, gen1.Components.Length);
-        Assert.Equal(typeof(ConstantSnowflakeComponent), gen1.Components[0].GetType());
-        Assert.Equal(typeof(SequenceSnowflakeComponent), gen1.Components[1].GetType());
+        Assert.Equal(typeof(ConstantSnowflakeComponent<long>), gen1.Components[0].GetType());
+        Assert.Equal(typeof(SequenceSnowflakeComponent<long>), gen1.Components[1].GetType());
 
-        var gen2 = new SnowflakeGeneratorBuilder()
+        var gen2 = new SnowflakeGeneratorBuilder<long>()
             .AddTimestamp(lengthInBits: 1, epoch: DateTimeOffset.UnixEpoch)
             .AddConstant(lengthInBits: 1, value: 8)
             .Build();
 
         Assert.Equal(2, gen2.Components.Length);
-        Assert.Equal(typeof(TimestampSnowflakeComponent), gen2.Components[0].GetType());
-        Assert.Equal(typeof(ConstantSnowflakeComponent), gen2.Components[1].GetType());
+        Assert.Equal(typeof(TimestampSnowflakeComponent<long>), gen2.Components[0].GetType());
+        Assert.Equal(typeof(ConstantSnowflakeComponent<long>), gen2.Components[1].GetType());
     }
 }

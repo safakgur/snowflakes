@@ -108,7 +108,7 @@ public class TimestampSnowflakeComponentTests
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(1));
 
         var component = Construct(lengthInBits: 2, epoch, TimeSpan.TicksPerSecond, testTimeProvider);
-        var ctx = new SnowflakeGenerationContext([component]);
+        var ctx = new SnowflakeGenerationContext<long>([component]);
 
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(3));
         _ = component.GetValue(ctx);
@@ -117,7 +117,7 @@ public class TimestampSnowflakeComponentTests
         Assert.Throws<OverflowException>(() => component.GetValue(ctx));
     }
 
-    protected virtual TimestampSnowflakeComponent Construct(
+    protected virtual TimestampSnowflakeComponent<long> Construct(
         int lengthInBits,
         DateTimeOffset epoch,
         long ticksPerUnit = TimeSpan.TicksPerMillisecond,

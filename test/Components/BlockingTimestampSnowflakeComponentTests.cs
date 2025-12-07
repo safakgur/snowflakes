@@ -15,7 +15,7 @@ public sealed class BlockingTimestampSnowflakeComponentTests : TimestampSnowflak
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(1));
 
         var component = Construct(lengthInBits: 10, epoch, TimeSpan.TicksPerSecond, testTimeProvider);
-        var ctx = new SnowflakeGenerationContext([component]);
+        var ctx = new SnowflakeGenerationContext<long>([component]);
 
         // First call will never block because it will produce a new timestamp (null -> 1)
         var watchStart = Stopwatch.GetTimestamp();
@@ -42,11 +42,11 @@ public sealed class BlockingTimestampSnowflakeComponentTests : TimestampSnowflak
         Assert.Throws<InvalidOperationException>(() => component.GetValue(ctx));
     }
 
-    protected override TimestampSnowflakeComponent Construct(
+    protected override TimestampSnowflakeComponent<long> Construct(
         int lengthInBits,
         DateTimeOffset epoch,
         long ticksPerUnit = TimeSpan.TicksPerMillisecond,
         TimeProvider? timeProvider = null) =>
-        new BlockingTimestampSnowflakeComponent(
+        new BlockingTimestampSnowflakeComponent<long>(
             lengthInBits, epoch, ticksPerUnit, timeProvider);
 }

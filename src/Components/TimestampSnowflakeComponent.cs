@@ -1,13 +1,17 @@
-﻿namespace Snowflakes.Components;
+﻿using System.Numerics;
+
+namespace Snowflakes.Components;
 
 /// <summary>Produces a timestamp to be placed in a snowflake.</summary>
-public class TimestampSnowflakeComponent : SnowflakeComponent
+/// <typeparam name="T">The snowflake type.</typeparam>
+public class TimestampSnowflakeComponent<T> : SnowflakeComponent<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
     /// <summary>
-    ///     Initializes a new instance of the <see cref="TimestampSnowflakeComponent" /> class.
+    ///     Initializes a new instance of the <see cref="TimestampSnowflakeComponent{T}" /> class.
     /// </summary>
     /// <param name="lengthInBits">
-    ///     <inheritdoc cref="SnowflakeComponent.SnowflakeComponent" path="/param[@name='lengthInBits']" />
+    ///     <inheritdoc cref="SnowflakeComponent{T}.SnowflakeComponent" path="/param[@name='lengthInBits']" />
     /// </param>
     /// <param name="epoch">
     ///     <para>The start of time for the produced timestamps.</para>
@@ -35,7 +39,7 @@ public class TimestampSnowflakeComponent : SnowflakeComponent
     ///     <para>Supplying this can be useful for testing or for using a custom time source.</para>
     /// </param>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///     <inheritdoc cref="SnowflakeComponent.SnowflakeComponent" path="/exception[@cref='ArgumentOutOfRangeException']"/>
+    ///     <inheritdoc cref="SnowflakeComponent{T}.SnowflakeComponent" path="/exception[@cref='ArgumentOutOfRangeException']"/>
     ///     -or-
     ///     <paramref name="epoch" /> is after the current time.
     ///     -or-
@@ -74,10 +78,10 @@ public class TimestampSnowflakeComponent : SnowflakeComponent
     public double TicksPerUnit { get; }
 
     /// <inheritdoc />
-    protected override long CalculateValue(SnowflakeGenerationContext ctx)
+    protected override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
         var ticksSinceEpoch = TimeProvider.GetUtcNow().Ticks - Epoch.UtcTicks;
 
-        return (long)(ticksSinceEpoch / TicksPerUnit);
+        return T.CreateChecked(ticksSinceEpoch / TicksPerUnit); // TODO: REVISE
     }
 }
