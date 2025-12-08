@@ -51,7 +51,7 @@ public sealed class SnowflakeComponentTests
         var component = new IncrementingTestSnowflakeComponent(
             lengthInBits, originalValue, allowTruncation: true);
 
-        var value = component.GetValue(new([component]));
+        var value = component.GetValue(new(component));
 
         Assert.Equal(maskedValue, value);
     }
@@ -62,7 +62,7 @@ public sealed class SnowflakeComponentTests
         var component = new IncrementingTestSnowflakeComponent(
             4, 0b_1110, allowTruncation: false);
 
-        var ctx = new SnowflakeGenerationContext<long>([component]);
+        var ctx = new SnowflakeGenerationContext<long>(component);
 
         Assert.Equal(0b_1110, component.GetValue(ctx));
         Assert.Equal(0b_1111, component.GetValue(ctx));
@@ -76,12 +76,12 @@ public sealed class SnowflakeComponentTests
 
         Assert.Equal(0, component.LastValue);
 
-        var value = component.GetValue(new([component]));
+        var value = component.GetValue(new(component));
 
         Assert.Equal(1, value);
         Assert.Equal(1, component.LastValue);
 
-        value = component.GetValue(new([component]));
+        value = component.GetValue(new(component));
 
         Assert.Equal(2, value);
         Assert.Equal(2, component.LastValue);

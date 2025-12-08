@@ -65,7 +65,7 @@ public sealed class SequenceSnowflakeComponentTests
         long GetValueForRefComponentValue(int refComponentValue)
         {
             var refComponent = new ConstantSnowflakeComponent<long>(lengthInBits: 10, value: refComponentValue);
-            var ctx = new SnowflakeGenerationContext<long>([refComponent, component]);
+            var ctx = new SnowflakeGenerationContext<long>(refComponent, component);
 
             _ = refComponent.GetValue(ctx);
 
@@ -79,7 +79,7 @@ public sealed class SequenceSnowflakeComponentTests
         var component = new SequenceSnowflakeComponent<long>(lengthInBits: 1, refComponentIndex: 0);
 
         var refComponent = new ConstantSnowflakeComponent<long>(lengthInBits: 1, value: 1);
-        var ctx = new SnowflakeGenerationContext<long>([refComponent, component]);
+        var ctx = new SnowflakeGenerationContext<long>(refComponent, component);
 
         Assert.Equal(0, component.GetValue(ctx));
         Assert.Equal(1, component.GetValue(ctx));

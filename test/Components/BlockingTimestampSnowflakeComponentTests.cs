@@ -15,7 +15,7 @@ public sealed class BlockingTimestampSnowflakeComponentTests : TimestampSnowflak
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(1));
 
         var component = Construct(lengthInBits: 10, epoch, TimeSpan.TicksPerSecond, testTimeProvider);
-        var ctx = new SnowflakeGenerationContext<long>([component]);
+        var ctx = new SnowflakeGenerationContext<long>(component);
 
         // First call will never block because it will produce a new timestamp (null -> 1)
         var watchStart = Stopwatch.GetTimestamp();
