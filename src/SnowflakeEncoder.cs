@@ -1,8 +1,6 @@
 ﻿using System.Collections.Frozen;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Numerics;
-using Snowflakes.Resources;
 using Lock =
 #if NET9_0_OR_GREATER
     System.Threading.Lock;
@@ -71,11 +69,6 @@ public sealed class SnowflakeEncoder
     public static SnowflakeEncoder Base36UpperOrdinal { get; } =
         new("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-    /// <inheritdoc cref="Base36UpperOrdinal" />
-    [Obsolete(DeprecationMessages.BuiltInBase36UpperEncoding)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static SnowflakeEncoder Base36Upper => Base36UpperOrdinal;
-
     /// <summary>
     ///     Gets an encoder that converts a snowflake to its lowercase base 36 representation, using
     ///     the digit set: US-ASCII digits (0-9), and lowercase letters (a-z).
@@ -86,11 +79,6 @@ public sealed class SnowflakeEncoder
     /// </remarks>
     public static SnowflakeEncoder Base36LowerOrdinal { get; } =
         new("0123456789abcdefghijklmnopqrstuvwxyz");
-
-    /// <inheritdoc cref="Base36LowerOrdinal" />
-    [Obsolete(DeprecationMessages.BuiltInBase36LowerEncoding)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static SnowflakeEncoder Base36Lower => Base36LowerOrdinal;
 
     /// <summary>
     ///     Gets an encoder that converts a snowflake to its base 62 representation, using the digit
@@ -103,11 +91,6 @@ public sealed class SnowflakeEncoder
     public static SnowflakeEncoder Base62Ordinal { get; } =
         new("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
-    /// <inheritdoc cref="Base62Ordinal" />
-    [Obsolete(DeprecationMessages.BuiltInBase62Encoding)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static SnowflakeEncoder Base62 => Base62Ordinal;
-
     /// <summary>
     ///     Gets an encoder that converts a snowflake to its URI-safe base 64 representation,
     ///     using the digit set: US-ASCII hyphen (-), digits (0-9), uppercase letters (A-Z),
@@ -119,11 +102,6 @@ public sealed class SnowflakeEncoder
     /// </remarks>
     public static SnowflakeEncoder Base64Ordinal { get; } =
         new("-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz");
-
-    /// <inheritdoc cref="Base64Ordinal" />
-    [Obsolete(DeprecationMessages.BuiltInBase64Encoding)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static SnowflakeEncoder Base64Snow => Base64Ordinal;
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private string DebuggerDisplay => $"Base ({_digits.Length}): {_digits}";

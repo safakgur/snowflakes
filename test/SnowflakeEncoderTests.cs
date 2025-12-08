@@ -1,7 +1,5 @@
 ﻿namespace Snowflakes.Tests;
 
-#pragma warning disable CS0618 // Type or member is obsolete
-
 public sealed class SnowflakeEncoderTests
 {
     private static readonly SnowflakeEncoder s_defaultEncoder = SnowflakeEncoder.Base62Ordinal;
@@ -240,17 +238,16 @@ public sealed class SnowflakeEncoderTests
     [InlineData(2718988031752955, "QRSTUVWXYZ")]
     public void Base36UpperOrdinal_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
     {
-        Assert.All([SnowflakeEncoder.Base36UpperOrdinal, SnowflakeEncoder.Base36Upper], encoder =>
-        {
-            var encoded = encoder.Encode(value);
-            Assert.Equal(expectedEncoded, encoded);
+        var encoder = SnowflakeEncoder.Base36UpperOrdinal;
 
-            var decoded = encoder.Decode<long>(encoded);
-            Assert.Equal(value, decoded);
+        var encoded = encoder.Encode(value);
+        Assert.Equal(expectedEncoded, encoded);
 
-            decoded = encoder.Decode(encoded);
-            Assert.Equal(value, decoded);
-        });
+        var decoded = encoder.Decode<long>(encoded);
+        Assert.Equal(value, decoded);
+
+        decoded = encoder.Decode(encoded);
+        Assert.Equal(value, decoded);
     }
 
     [Theory]
@@ -265,17 +262,16 @@ public sealed class SnowflakeEncoderTests
     [InlineData(2718988031752955, "qrstuvwxyz")]
     public void Base36LowerOrdinal_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
     {
-        Assert.All([SnowflakeEncoder.Base36LowerOrdinal, SnowflakeEncoder.Base36Lower], encoder =>
-        {
-            var encoded = encoder.Encode(value);
-            Assert.Equal(expectedEncoded, encoded);
+        var encoder = SnowflakeEncoder.Base36LowerOrdinal;
 
-            var decoded = encoder.Decode<long>(encoded);
-            Assert.Equal(value, decoded);
+        var encoded = encoder.Encode(value);
+        Assert.Equal(expectedEncoded, encoded);
 
-            decoded = encoder.Decode(encoded);
-            Assert.Equal(value, decoded);
-        });
+        var decoded = encoder.Decode<long>(encoded);
+        Assert.Equal(value, decoded);
+
+        decoded = encoder.Decode(encoded);
+        Assert.Equal(value, decoded);
     }
 
     [Theory]
@@ -296,17 +292,16 @@ public sealed class SnowflakeEncoderTests
     [InlineData(715693869363139889, "qrstuvwxyz")]
     public void Base62Ordinal_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
     {
-        Assert.All([SnowflakeEncoder.Base62Ordinal, SnowflakeEncoder.Base62], encoder =>
-        {
-            var encoded = encoder.Encode(value);
-            Assert.Equal(expectedEncoded, encoded);
+        var encoder = SnowflakeEncoder.Base62Ordinal;
 
-            var decoded = encoder.Decode<long>(encoded);
-            Assert.Equal(value, decoded);
+        var encoded = encoder.Encode(value);
+        Assert.Equal(expectedEncoded, encoded);
 
-            decoded = encoder.Decode(encoded);
-            Assert.Equal(value, decoded);
-        });
+        var decoded = encoder.Decode<long>(encoded);
+        Assert.Equal(value, decoded);
+
+        decoded = encoder.Decode(encoded);
+        Assert.Equal(value, decoded);
     }
 
     [Theory]
@@ -331,18 +326,15 @@ public sealed class SnowflakeEncoderTests
     [InlineData(4031, "yz")]
     public void Base64Ordinal_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
     {
-        Assert.All([SnowflakeEncoder.Base64Ordinal, SnowflakeEncoder.Base64Snow], encoder =>
-        {
-            var encoded = encoder.Encode(value);
-            Assert.Equal(expectedEncoded, encoded);
+        var encoder = SnowflakeEncoder.Base64Ordinal;
 
-            var decoded = encoder.Decode<long>(encoded);
-            Assert.Equal(value, decoded);
+        var encoded = encoder.Encode(value);
+        Assert.Equal(expectedEncoded, encoded);
 
-            decoded = encoder.Decode(encoded);
-            Assert.Equal(value, decoded);
-        });
+        var decoded = encoder.Decode<long>(encoded);
+        Assert.Equal(value, decoded);
+
+        decoded = encoder.Decode(encoded);
+        Assert.Equal(value, decoded);
     }
 }
-
-#pragma warning restore CS0618 // Type or member is obsolete
