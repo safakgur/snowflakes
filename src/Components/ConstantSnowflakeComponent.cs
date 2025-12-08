@@ -38,5 +38,5 @@ public sealed class ConstantSnowflakeComponent<T> : SnowflakeComponent<T>
     public T Value { get; }
 
     /// <inheritdoc />
-    protected override T CalculateValue(SnowflakeGenerationContext<T> ctx) => Value;
+    public override T CalculateValue(SnowflakeGenerationContext<T> ctx) => Value;
 }

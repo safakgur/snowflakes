@@ -18,7 +18,7 @@ public sealed partial class ReadmeCustomComponent : BaseReadme
 
         protected override bool AllowTruncation { get => true; init { } }
 
-        protected override T CalculateValue(SnowflakeGenerationContext<T> ctx)
+        public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
         {
             Span<byte> buffer = stackalloc byte[MaxLengthInBytes];
             while (true)

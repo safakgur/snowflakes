@@ -78,7 +78,7 @@ public class TimestampSnowflakeComponent<T> : SnowflakeComponent<T>
     public double TicksPerUnit { get; }
 
     /// <inheritdoc />
-    protected override T CalculateValue(SnowflakeGenerationContext<T> ctx)
+    public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
         var ticksSinceEpoch = TimeProvider.GetUtcNow().Ticks - Epoch.UtcTicks;
 

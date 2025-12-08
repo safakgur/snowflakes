@@ -1,4 +1,8 @@
-﻿namespace Snowflakes.Tests.Readme;
+﻿using NSubstitute;
+using Snowflakes.Components;
+using Snowflakes.Tests.Testing;
+
+namespace Snowflakes.Tests.Readme;
 
 public sealed class ReadmeAdvanced : BaseReadme
 {
@@ -53,5 +57,54 @@ public sealed class ReadmeAdvanced : BaseReadme
         // CONTENT-END
 
         _ = snowflakeGen;
+    }
+
+    [Fact]
+    public void Testing_snowflake_generation_with_constant_fake()
+    {
+        // CONTENT-START
+
+        var testSnowflakeGen = SnowflakeGenerator.CreateBuilder()
+            .AddConstant(63, 123L)
+            .Build();
+
+        // `testSnowflakeGen.NewSnowflake()` will always return 123.
+
+        // CONTENT-END
+
+        Assert.Equal(123L, testSnowflakeGen.NewSnowflake());
+    }
+
+    [Fact]
+    public void Testing_snowflake_generation_with_mocked_component()
+    {
+        // CONTENT-START
+
+        var random = new Random();
+
+        // NSubstitute example
+        var testComponent = Substitute.For<SnowflakeComponent<long>>(31);
+        testComponent
+            .CalculateValue(Arg.Any<SnowflakeGenerationContext<long>>())
+            .Returns(call =>
+            {
+                // Context can be used to access other components of the generator.
+                // var ctx = call.Arg<SnowflakeGenerationContext<long>>();
+                // var timestampLastValue = ctx.Components[0].LastValue;
+
+                // Return any value for tests.
+                return random.Next();
+            });
+
+        // Assuming we have a test time provider
+        var testEpoch = TestTimeProvider.Instance.GetUtcNow().AddDays(-10);
+        var testSnowflakeGen = SnowflakeGenerator.CreateBuilder()
+            .AddTimestamp(32, testEpoch)
+            .Add(testComponent)
+            .Build();
+
+        // CONTENT-END
+
+        _ = testSnowflakeGen.NewSnowflake();
     }
 }
