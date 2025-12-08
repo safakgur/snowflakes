@@ -1,4 +1,5 @@
-﻿using Snowflakes.Components;
+﻿using System.Numerics;
+using Snowflakes.Components;
 
 namespace Snowflakes.Tests.Components;
 
@@ -30,5 +31,31 @@ public sealed class ConstantSnowflakeComponentTests
         var component = new ConstantSnowflakeComponent<long>(lengthInBits: 10, value: value);
 
         Assert.Equal(value, component.GetValue(new(component)));
+    }
+
+    [Fact]
+    public void Can_be_used_with_built_in_integer_types()
+    {
+        Test<sbyte>();
+        Test<byte>();
+        Test<short>();
+        Test<ushort>();
+        Test<int>();
+        Test<uint>();
+        Test<long>();
+        Test<ulong>();
+        Test<Int128>();
+        Test<UInt128>();
+
+        static void Test<T>()
+            where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
+        {
+            var value = T.CreateChecked(127);
+            var component = new ConstantSnowflakeComponent<T>(lengthInBits: 7, value);
+
+            var ctx = new SnowflakeGenerationContext<T>(component);
+
+            Assert.Equal(value, component.GetValue(ctx));
+        }
     }
 }

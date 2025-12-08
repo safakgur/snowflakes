@@ -1,5 +1,7 @@
-﻿using NSubstitute;
+﻿using System.Numerics;
+using NSubstitute;
 using Snowflakes.Components;
+using Snowflakes.Tests.Testing;
 
 namespace Snowflakes.Tests.Components;
 
@@ -99,6 +101,35 @@ public class TimestampSnowflakeComponentTests
 
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(4));
         Assert.Throws<OverflowException>(() => component.GetValue(ctx));
+    }
+
+    [Fact]
+    public void Can_be_used_with_built_in_integer_types()
+    {
+        var timeProvider = TestTimeProvider.Frozen;
+        var epoch = timeProvider.GetUtcNow().AddSeconds(-10);
+
+        Test<sbyte>();
+        Test<byte>();
+        Test<short>();
+        Test<ushort>();
+        Test<int>();
+        Test<uint>();
+        Test<long>();
+        Test<ulong>();
+        Test<Int128>();
+        Test<UInt128>();
+
+        void Test<T>()
+            where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
+        {
+            var component = new BlockingTimestampSnowflakeComponent<T>(
+                lengthInBits: 7, epoch, TimeSpan.TicksPerSecond, timeProvider);
+
+            var ctx = new SnowflakeGenerationContext<T>(component);
+
+            Assert.Equal(T.CreateChecked(10), component.GetValue(ctx));
+        }
     }
 
     protected virtual TimestampSnowflakeComponent<long> Construct(

@@ -1,12 +1,12 @@
 ﻿namespace Snowflakes.Tests.Testing;
 
-internal sealed class TestTimeProvider : TimeProvider
+internal sealed class TestTimeProvider(DateTimeOffset utcNow) : TimeProvider
 {
-    private static readonly DateTimeOffset s_now = DateTimeOffset.UtcNow;
+    private DateTimeOffset _utcNow = utcNow;
 
-    private TestTimeProvider() { }
+    public static TimeProvider Frozen { get; } = new TestTimeProvider(DateTimeOffset.UtcNow);
 
-    public static TimeProvider Instance { get; } = new TestTimeProvider();
+    public override DateTimeOffset GetUtcNow() => _utcNow;
 
-    public override DateTimeOffset GetUtcNow() => s_now;
+    public void SetUtcNow(DateTimeOffset now) => _utcNow = now;
 }

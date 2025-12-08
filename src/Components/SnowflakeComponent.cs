@@ -150,6 +150,8 @@ public abstract class SnowflakeComponent<T>
     ///     <paramref name="ctx" /> is null.
     /// </exception>
     /// <exception cref="OverflowException">
+    ///     The component attempted to produce a value that is too big for type <typeparamref name="T" />.
+    ///     -or-
     ///     The component produced a value that exceeds the number of bits specified by
     ///     <see cref="LengthInBits" />, and <see cref="AllowTruncation" /> was false.
     /// </exception>
@@ -184,5 +186,8 @@ public abstract class SnowflakeComponent<T>
     ///     <see cref="LengthInBits" /> number of bits set, and updates <see cref="LastValue" />
     ///     with it.
     /// </remarks>
+    /// <exception cref="OverflowException">
+    ///     The component attempted to produce a value that is too big for type <typeparamref name="T" />.
+    /// </exception>
     public abstract T CalculateValue(SnowflakeGenerationContext<T> ctx);
 }

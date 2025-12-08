@@ -7,7 +7,7 @@ namespace Snowflakes.Components;
 /// <remarks>
 ///     When a new snowflake is requested within the same unit of time, this component will block
 ///     the current thread until the next unit of time is reached.
-/// </remarks> 
+/// </remarks>
 /// <inheritdoc cref="TimestampSnowflakeComponent{T}.TimestampSnowflakeComponent" />
 public sealed class BlockingTimestampSnowflakeComponent<T>(
     int lengthInBits,

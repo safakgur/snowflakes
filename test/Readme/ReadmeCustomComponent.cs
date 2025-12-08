@@ -39,14 +39,14 @@ public sealed partial class ReadmeCustomComponent : BaseReadme
 
         // CONTENT-START
 
-        var snowflakgeGen = SnowflakeGenerator.CreateBuilder()
+        var snowflakeGen = SnowflakeGenerator.CreateBuilder()
             .AddTimestamp(30, epoch)
             .Add(new RandomSnowflakeComponent<long>(33)) // Here we add our custom component
             .Build();
 
         // High 30 bits have milliseconds elapsed since `epoch` while low 33 bits are random.
         // Similar to a version 7 UUID, albeit smaller.
-        var snowflake = snowflakgeGen.NewSnowflake();
+        var snowflake = snowflakeGen.NewSnowflake();
 
         // CONTENT-END
 
@@ -80,13 +80,13 @@ public sealed partial class ReadmeCustomComponent : BaseReadme
 
         // CONTENT-START
 
-        var snowflakgeGen = SnowflakeGenerator.CreateBuilder()
+        var snowflakeGen = SnowflakeGenerator.CreateBuilder()
             .AddTimestamp(30, epoch)
             .AddRandom(33) // Extension method
             .Build();
 
         // CONTENT-END
 
-        _ = snowflakgeGen;
+        _ = snowflakeGen;
     }
 }

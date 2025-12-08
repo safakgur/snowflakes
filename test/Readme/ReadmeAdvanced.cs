@@ -97,7 +97,7 @@ public sealed class ReadmeAdvanced : BaseReadme
             });
 
         // Assuming we have a test time provider
-        var testEpoch = TestTimeProvider.Instance.GetUtcNow().AddDays(-10);
+        var testEpoch = TestTimeProvider.Frozen.GetUtcNow().AddDays(-10);
         var testSnowflakeGen = SnowflakeGenerator.CreateBuilder()
             .AddTimestamp(32, testEpoch)
             .Add(testComponent)

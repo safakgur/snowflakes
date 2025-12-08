@@ -1,4 +1,5 @@
-﻿using Snowflakes.Components;
+﻿using System.Numerics;
+using Snowflakes.Components;
 
 namespace Snowflakes.Tests.Components;
 
@@ -68,5 +69,32 @@ public sealed class SequenceSnowflakeComponentTests
         Assert.Equal(0, component.GetValue(ctx));
         Assert.Equal(1, component.GetValue(ctx));
         Assert.Throws<OverflowException>(() => component.GetValue(ctx));
+    }
+
+    [Fact]
+    public void Can_be_used_with_built_in_integer_types()
+    {
+        Test<sbyte>();
+        Test<byte>();
+        Test<short>();
+        Test<ushort>();
+        Test<int>();
+        Test<uint>();
+        Test<long>();
+        Test<ulong>();
+        Test<Int128>();
+        Test<UInt128>();
+
+        static void Test<T>()
+            where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
+        {
+            var refComponent = new ConstantSnowflakeComponent<T>(lengthInBits: 1, value: T.Zero);
+            var component = new SequenceSnowflakeComponent<T>(lengthInBits: 7, refComponentIndex: 0);
+
+            var ctx = new SnowflakeGenerationContext<T>(refComponent, component);
+
+            for (var i = 0; i < 7; i++)
+                Assert.Equal(T.CreateChecked(i), component.GetValue(ctx));
+        }
     }
 }

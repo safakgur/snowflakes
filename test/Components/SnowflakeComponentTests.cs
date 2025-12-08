@@ -156,7 +156,7 @@ public sealed class SnowflakeComponentTests
     public sealed class IncrementingTestSnowflakeComponent<T> : SnowflakeComponent<T>
         where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
     {
-        private T _startValue;
+        private T _value;
 
         public IncrementingTestSnowflakeComponent(
             int lengthInBits, T startValue = default, bool allowTruncation = false)
@@ -164,9 +164,9 @@ public sealed class SnowflakeComponentTests
         {
             AllowTruncation = allowTruncation;
 
-            _startValue = startValue;
+            _value = startValue;
         }
 
-        public override T CalculateValue(SnowflakeGenerationContext<T> ctx) => _startValue++;
+        public override T CalculateValue(SnowflakeGenerationContext<T> ctx) => _value++;
     }
 }
