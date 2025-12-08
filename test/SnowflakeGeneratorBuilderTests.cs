@@ -1,7 +1,5 @@
-﻿using System.Security.Cryptography;
-using NSubstitute;
+﻿using NSubstitute;
 using Snowflakes.Components;
-using Snowflakes.Resources;
 
 namespace Snowflakes.Tests;
 
@@ -114,32 +112,6 @@ public sealed class SnowflakeGeneratorBuilderTests
 
         Assert.Equal(lengthInBits, constComponent.LengthInBits);
         Assert.Equal(value, constComponent.Value);
-    }
-
-    [Theory]
-    [InlineData("MD5", 2353163291832495564L)]
-    [InlineData("SHA256", 8069623936395563335L)]
-    [Obsolete(DeprecationMessages.HashedConstantComponent)]
-    public void AddConstant_valueToHash_creates_component_with_correct_properties(
-        string algName, long expectedValue)
-    {
-        var lengthInBits = 63;
-        var valueToHash = "test value";
-        using HashAlgorithm hashAlg = algName switch
-        {
-            "MD5" => MD5.Create(),
-            "SHA256" => SHA256.Create(),
-            _ => throw new NotImplementedException()
-        };
-
-        var component = _builder
-            .AddConstant(lengthInBits, valueToHash, hashAlg)
-            .Build().Components[0];
-
-        var constComponent = Assert.IsType<ConstantSnowflakeComponent<long>>(component);
-
-        Assert.Equal(lengthInBits, constComponent.LengthInBits);
-        Assert.Equal(expectedValue, constComponent.Value);
     }
 
     [Fact]

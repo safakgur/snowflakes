@@ -1,8 +1,4 @@
-﻿using System.ComponentModel;
-using System.Numerics;
-using System.Security.Cryptography;
-using System.Text;
-using Snowflakes.Resources;
+﻿using System.Numerics;
 
 namespace Snowflakes.Components;
 
@@ -31,64 +27,6 @@ public sealed class ConstantSnowflakeComponent<T> : SnowflakeComponent<T>
 
         AllowTruncation = true;
         Value = value;
-    }
-
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="ConstantSnowflakeComponent{T}" /> class
-    ///     that provides a (up to 63-bit) hash of the specified string.
-    /// </summary>
-    /// <param name="lengthInBits">
-    ///     <inheritdoc cref="SnowflakeComponent{T}(int)" path="/param[@name='lengthInBits']" />
-    /// </param>
-    /// <param name="valueToHash">The string value to be hashed to produce the fixed value.</param>
-    /// <param name="hashAlg">The hash algorithm used to hash the string value.</param>
-    /// <remarks>
-    ///     <para>
-    ///         Only use the hashing version if you cannot get an integer value, as hashing might
-    ///         produce conflicts. Choose a good algorithm and specify a higher length to minimize
-    ///         the risk of hash collisions.
-    ///     </para>
-    ///     <para>
-    ///         For example, if you use Azure App Services, there is no easy and reliable way of
-    ///         getting an integer index of the current "instance" (also referred to as "machine"
-    ///         or "shard" by other providers) of your application, but a string that uniquely
-    ///         identifies the instance can be retrieved from the "WEBSITE_INSTANCE_ID" environment
-    ///         variable. Hashing that string can be a relatively safe way to get a smaller,
-    ///         fixed-length identifier.
-    ///     </para>
-    /// </remarks>
-    /// <exception cref="ArgumentNullException">
-    ///     <paramref name="valueToHash" /> or <paramref name="hashAlg" /> is null.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    ///     <paramref name="valueToHash" /> is an empty string.
-    /// </exception>
-    [Obsolete(DeprecationMessages.HashedConstantComponent)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public ConstantSnowflakeComponent(int lengthInBits, string valueToHash, HashAlgorithm hashAlg)
-        : base(lengthInBits)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(valueToHash);
-        ArgumentNullException.ThrowIfNull(hashAlg);
-
-        var sourceValueInUtf8 = Encoding.UTF8.GetBytes(valueToHash);
-
-        var hash = new byte[hashAlg.HashSize / 8].AsSpan();
-        hashAlg.TryComputeHash(sourceValueInUtf8, hash, out _);
-        hash = hash[..8];
-
-        if (!BitConverter.IsLittleEndian)
-        {
-            // So that the same value produces the same hash on different machines.
-            hash.Reverse();
-        }
-
-        AllowTruncation = true;
-
-        var isUnsigned = T.MinValue == T.Zero;
-        Value = T.Abs(BitConverter.IsLittleEndian
-            ? T.ReadLittleEndian(hash, isUnsigned)
-            : T.ReadBigEndian(hash, isUnsigned));
     }
 
     /// <summary>Gets the value that will be provided by this component.</summary>
