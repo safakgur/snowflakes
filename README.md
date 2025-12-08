@@ -233,13 +233,13 @@ but it also allows you to create your own components by subclassing `SnowflakeCo
 Below is an example custom component that provides random bits.
 
 ```csharp
-public sealed class RandomSnowflakeComponent<T>(int lengthInBits)
-    : SnowflakeComponent<T>(lengthInBits)
+public sealed class RandomSnowflakeComponent<T> : SnowflakeComponent<T>
     where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    private static readonly bool s_isUnsigned = T.MinValue == T.Zero;
-
-    protected override bool AllowTruncation { get => true; init { } }
+    public RandomSnowflakeComponent(int lengthInBits) : base(lengthInBits)
+    {
+        AllowTruncation = true;
+    }
 
     public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
@@ -247,7 +247,7 @@ public sealed class RandomSnowflakeComponent<T>(int lengthInBits)
         while (true)
         {
             RandomNumberGenerator.Fill(buffer);
-            if (T.TryReadLittleEndian(buffer, s_isUnsigned, out var value))
+            if (T.TryReadLittleEndian(buffer, IsUnsigned, out var value))
                 return value;
         }
     }

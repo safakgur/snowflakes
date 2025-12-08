@@ -6,22 +6,6 @@ namespace Snowflakes.Tests.Components;
 public class TimestampSnowflakeComponentTests
 {
     [Theory]
-    [MemberData(nameof(SnowflakeComponentTests.LengthInBits_IsValid_Data), MemberType = typeof(SnowflakeComponentTests))]
-    public void Ctor_validates_lengthInBits(int lengthInBits, bool isValid)
-    {
-        if (isValid)
-        {
-            var component = Construct(lengthInBits, epoch: default);
-            Assert.Equal(lengthInBits, component.LengthInBits);
-        }
-        else
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
-                Construct(lengthInBits, epoch: default));
-        }
-    }
-
-    [Theory]
     [InlineData(1, true)]
     [InlineData(0, true)]
     [InlineData(-1, false)]
