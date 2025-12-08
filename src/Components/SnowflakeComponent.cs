@@ -48,6 +48,15 @@ public abstract class SnowflakeComponent<T>
     /// </remarks>
     protected internal static readonly int MaxLengthInBytes = int.CreateChecked(T.PopCount(T.AllBitsSet)) / 8;
 
+    /// <summary>
+    ///     Indicates whether <typeparamref name="T" /> is an unsigned integer type.
+    /// </summary>
+    /// <value>
+    ///     true if the minimum value of the type is zero, which is characteristic of unsigned
+    ///     numeric types, as signed types have negative minimum values; otherwise, false.
+    /// </value>
+    protected internal static readonly bool IsUnsigned = T.MinValue == T.Zero;
+
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly T _mask;
 
@@ -72,7 +81,9 @@ public abstract class SnowflakeComponent<T>
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(lengthInBits);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(lengthInBits, MaxLengthInBits);
 
-        _mask = (T.One << lengthInBits) - T.One;
+        _mask = lengthInBits == MaxLengthInBits
+            ? T.MaxValue
+            : (T.One << lengthInBits) - T.One;
 
         LengthInBits = lengthInBits;
     }

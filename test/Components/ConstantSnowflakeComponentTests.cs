@@ -5,23 +5,6 @@ namespace Snowflakes.Tests.Components;
 public sealed class ConstantSnowflakeComponentTests
 {
     [Theory]
-    [MemberData(nameof(SnowflakeComponentTests.LengthInBits_IsValid_Data), MemberType = typeof(SnowflakeComponentTests))]
-    public void Ctor_validates_lengthInBits(int lengthInBits, bool isValid)
-    {
-        if (isValid)
-        {
-            var component = new ConstantSnowflakeComponent<long>(lengthInBits, value: 0L);
-            Assert.Equal(lengthInBits, component.LengthInBits);
-        }
-        else
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
-                new ConstantSnowflakeComponent<long>(lengthInBits, value: 0L));
-        }
-    }
-
-
-    [Theory]
     [InlineData(-1, false)]
     [InlineData(0, true)]
     [InlineData(long.MaxValue, true)]
