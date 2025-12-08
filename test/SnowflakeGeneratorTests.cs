@@ -200,7 +200,7 @@ public sealed class SnowflakeGeneratorTests
     {
         public int Count { get; private set; }
 
-        protected override long CalculateValue(SnowflakeGenerationContext<long> ctx)
+        public override long CalculateValue(SnowflakeGenerationContext<long> ctx)
         {
             Count++;
 
@@ -217,7 +217,7 @@ public sealed class SnowflakeGeneratorTests
 
         public void AllowOne() => _event.Set();
 
-        protected override long CalculateValue(SnowflakeGenerationContext<long> ctx)
+        public override long CalculateValue(SnowflakeGenerationContext<long> ctx)
         {
             _event.WaitOne();
 
@@ -230,7 +230,7 @@ public sealed class SnowflakeGeneratorTests
     {
         public long LastExecutionTimestamp { get; private set; }
 
-        protected override long CalculateValue(SnowflakeGenerationContext<long> ctx)
+        public override long CalculateValue(SnowflakeGenerationContext<long> ctx)
         {
             var timeProvider = TimeProvider.System;
 

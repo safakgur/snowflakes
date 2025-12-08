@@ -24,7 +24,7 @@ public sealed class BlockingTimestampSnowflakeComponent<T>(
     private T? _lastValue;
 
     /// <inheritdoc />
-    protected override T CalculateValue(SnowflakeGenerationContext<T> ctx)
+    public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
         for (var i = 0; true; i++)
         {

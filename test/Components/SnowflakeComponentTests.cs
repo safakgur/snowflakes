@@ -126,7 +126,7 @@ public sealed class SnowflakeComponentTests
             _startValue = startValue;
         }
 
-        protected override long CalculateValue(SnowflakeGenerationContext<long> ctx) => _startValue++;
+        public override long CalculateValue(SnowflakeGenerationContext<long> ctx) => _startValue++;
     }
 
 }

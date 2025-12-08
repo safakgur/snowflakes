@@ -52,7 +52,7 @@ public sealed class SequenceSnowflakeComponent<T> : SnowflakeComponent<T>
     public int ReferenceComponentIndex { get; }
 
     /// <inheritdoc />
-    protected override T CalculateValue(SnowflakeGenerationContext<T> ctx)
+    public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
         var refComponentLastValue = ctx.Components[ReferenceComponentIndex].LastValue;
         if (refComponentLastValue == _refComponentValue)
