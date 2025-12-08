@@ -8,5 +8,5 @@ public abstract class BaseReadme
         SnowflakeGenerator.CreateBuilder().AddConstant(1, 1).Build();
 
     protected static readonly DateTimeOffset TestEpoch =
-        TestTimeProvider.Instance.GetUtcNow().AddDays(-10);
+        TestTimeProvider.Frozen.GetUtcNow().AddDays(-10);
 }

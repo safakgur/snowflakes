@@ -10,7 +10,7 @@ public sealed class ReadmeDependencyInjection : BaseReadme
     public void Dependency_injection_registration()
     {
         var services = new ServiceCollection()
-            .AddSingleton(TestTimeProvider.Instance)
+            .AddSingleton(TestTimeProvider.Frozen)
             .Configure<ProgramOptions>(opts => opts.InstanceId = 1);
 
         // CONTENT-START

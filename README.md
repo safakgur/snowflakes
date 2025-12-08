@@ -14,7 +14,7 @@ Timestamp, Sequence, and Instance ID, using any integer type.
 ## Layout
 
 Traditional snowflakes are 64-bit IDs, where only 63 bits are used for one to fit in a signed
-integer. The library defaults to `long`/`Int64` snowflakes for maximum compability, but allows
+integer. The library defaults to `long`/`Int64` snowflakes for maximum compatibility, but allows
 other integer types to be used when desired. There are examples of this later in this document.
 
 There are three standard components that make up a snowflake:
@@ -257,14 +257,14 @@ public sealed class RandomSnowflakeComponent<T> : SnowflakeComponent<T>
 You can configure a snowflake generator to use any `SnowflakeComponent` implementation.
 
 ```csharp
-var snowflakgeGen = SnowflakeGenerator.CreateBuilder()
+var snowflakeGen = SnowflakeGenerator.CreateBuilder()
     .AddTimestamp(30, epoch)
     .Add(new RandomSnowflakeComponent<long>(33)) // Here we add our custom component
     .Build();
 
 // High 30 bits have milliseconds elapsed since `epoch` while low 33 bits are random.
 // Similar to a version 7 UUID, albeit with a smaller range.
-var snowflake = snowflakgeGen.NewSnowflake();
+var snowflake = snowflakeGen.NewSnowflake();
 ```
 
 If you're feeling fancy, you can also write an extension method for `SnowflakeGeneratorBuilder`.
@@ -286,7 +286,7 @@ public static class SnowflakeGeneratorBuilderExtensions
 The extension we created above allows usage like `AddRandom(33)`.
 
 ```csharp
-var snowflakgeGen = SnowflakeGenerator.CreateBuilder()
+var snowflakeGen = SnowflakeGenerator.CreateBuilder()
     .AddTimestamp(30, epoch)
     .AddRandom(33) // Extension method
     .Build();
@@ -325,7 +325,7 @@ testComponent
     });
 
 // Assuming we have a test time provider
-var testEpoch = TestTimeProvider.Instance.GetUtcNow().AddDays(-10);
+var testEpoch = TestTimeProvider.Frozen.GetUtcNow().AddDays(-10);
 var testSnowflakeGen = SnowflakeGenerator.CreateBuilder()
     .AddTimestamp(32, testEpoch)
     .Add(testComponent)

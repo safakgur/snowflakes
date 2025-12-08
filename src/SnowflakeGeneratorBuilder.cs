@@ -23,6 +23,10 @@ public sealed class SnowflakeGeneratorBuilder<T>
     }
 
     /// <summary>Gets the components added to the builder.</summary>
+    /// <remarks>
+    ///     The order of components in this list determines their bit layout in generated snowflakes.
+    ///     This property can be used to inspect the structure of the snowflake format being built.
+    /// </remarks>
     public IReadOnlyList<SnowflakeComponent<T>> Components { get; }
 
     /// <summary>Adds a timestamp component to the snowflakes that will be generated.</summary>

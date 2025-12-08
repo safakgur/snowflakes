@@ -75,13 +75,13 @@ public class TimestampSnowflakeComponent<T> : SnowflakeComponent<T>
     ///     Gets the number of ticks per unit of time.
     ///     This determines the precision of the timestamp
     /// </summary>
-    public double TicksPerUnit { get; }
+    public long TicksPerUnit { get; }
 
     /// <inheritdoc />
     public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
         var ticksSinceEpoch = TimeProvider.GetUtcNow().Ticks - Epoch.UtcTicks;
 
-        return T.CreateChecked(ticksSinceEpoch / TicksPerUnit); // TODO: REVISE
+        return T.CreateChecked(ticksSinceEpoch / TicksPerUnit);
     }
 }
