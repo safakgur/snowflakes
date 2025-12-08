@@ -91,7 +91,7 @@ public class TimestampSnowflakeComponentTests
         testTimeProvider.GetUtcNow().Returns(now);
 
         var component = Construct(lengthInBits: 11, epoch, ticksPerUnit, testTimeProvider);
-        var value = component.GetValue(new([component]));
+        var value = component.GetValue(new(component));
 
         Assert.Equal(expectedValue, value);
 
@@ -108,7 +108,7 @@ public class TimestampSnowflakeComponentTests
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(1));
 
         var component = Construct(lengthInBits: 2, epoch, TimeSpan.TicksPerSecond, testTimeProvider);
-        var ctx = new SnowflakeGenerationContext<long>([component]);
+        var ctx = new SnowflakeGenerationContext<long>(component);
 
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(3));
         _ = component.GetValue(ctx);

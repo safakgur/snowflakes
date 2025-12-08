@@ -14,7 +14,7 @@ public sealed class SnowflakeGenerationContext<T>
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly SnowflakeComponent<T>[] _components;
 
-    internal SnowflakeGenerationContext(SnowflakeComponent<T>[] components) => _components = components;
+    internal SnowflakeGenerationContext(params SnowflakeComponent<T>[] components) => _components = components;
 
     /// <summary>
     ///     Gets all the configured components that are getting used to

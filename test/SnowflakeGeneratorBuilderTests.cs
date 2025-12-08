@@ -46,6 +46,26 @@ public sealed class SnowflakeGeneratorBuilderTests
         Assert.Same(_builder, result);
     }
 
+    [Fact]
+    public void Components_is_updated()
+    {
+        Assert.Empty(_builder.Components);
+
+        var component1 = new ConstantSnowflakeComponent<long>(lengthInBits: 1, value: 1);
+
+        _builder.Add(component1);
+
+        Assert.Same(component1, Assert.Single(_builder.Components));
+
+        var component2 = new ConstantSnowflakeComponent<long>(lengthInBits: 1, value: 1);
+
+        _builder.Add(component2);
+
+        Assert.Equal(2, _builder.Components.Count);
+        Assert.Same(component1, _builder.Components[0]);
+        Assert.Same(component2, _builder.Components[1]);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

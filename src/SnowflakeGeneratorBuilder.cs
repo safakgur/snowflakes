@@ -7,16 +7,26 @@ using Snowflakes.Resources;
 namespace Snowflakes;
 
 /// <summary>Builds <see cref="SnowflakeGenerator{T}" /> instances.</summary>
+/// <typeparam name="T">The snowflake type.</typeparam>
 public sealed class SnowflakeGeneratorBuilder<T>
     where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    private readonly HashSet<SnowflakeComponent<T>> _componentSet = new(3);
-    private readonly List<SnowflakeComponent<T>> _componentList = new(3);
+    private readonly HashSet<SnowflakeComponent<T>> _componentSet;
+    private readonly List<SnowflakeComponent<T>> _componentList;
 
     private int _totalLengthInBits;
 
     /// <summary>Initializes a new instance of the <see cref="SnowflakeGeneratorBuilder{T}" /> class.</summary>
-    public SnowflakeGeneratorBuilder() { }
+    internal SnowflakeGeneratorBuilder()
+    {
+        _componentSet = new(3);
+        _componentList = new(3);
+
+        Components = _componentList.AsReadOnly();
+    }
+
+    /// <summary>Gets the components added to the builder.</summary>
+    public IReadOnlyList<SnowflakeComponent<T>> Components { get; }
 
     /// <summary>Adds a timestamp component to the snowflakes that will be generated.</summary>
     /// <returns>A reference to the current builder instance.</returns>

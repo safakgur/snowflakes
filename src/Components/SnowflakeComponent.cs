@@ -103,7 +103,7 @@ public abstract class SnowflakeComponent<T>
     ///     exceeds the number of bits specified by <see cref="LengthInBits" />. If set to true,
     ///     the higher-order bits will be truncated without throwing an exception.
     /// </remarks>
-    protected bool AllowTruncation { get; init; }
+    protected virtual bool AllowTruncation { get; init; }
 
     /// <summary>Gets or sets the snowflake generator that owns this component.</summary>
     /// <exception cref="ArgumentNullException">Value is null.</exception>

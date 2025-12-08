@@ -106,12 +106,12 @@ public sealed class ConstantSnowflakeComponentTests
 
         using var md5HashAlg = MD5.Create();
         var component = new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash, md5HashAlg);
-        var value = component.GetValue(new([component]));
+        var value = component.GetValue(new(component));
         Assert.Equal(expectedMD5Hash, value);
 
         using var sha256HashAlg = SHA256.Create();
         component = new ConstantSnowflakeComponent<long>(lengthInBits, valueToHash, sha256HashAlg);
-        value = component.GetValue(new([component]));
+        value = component.GetValue(new(component));
         Assert.Equal(expectedSHA256Hash, value);
     }
 
@@ -122,6 +122,6 @@ public sealed class ConstantSnowflakeComponentTests
     {
         var component = new ConstantSnowflakeComponent<long>(lengthInBits: 10, value: value);
 
-        Assert.Equal(value, component.GetValue(new([component])));
+        Assert.Equal(value, component.GetValue(new(component)));
     }
 }

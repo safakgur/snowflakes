@@ -11,6 +11,43 @@ using Lock =
 namespace Snowflakes;
 
 /// <summary>Generates 64-bit Snowflake IDs, also known as snowflakes.</summary>
+public static class SnowflakeGenerator
+{
+    /// <summary>Creates a new generator for snowflakes of the specified integer type.</summary>
+    /// <typeparam name="T">The snowflake type.</typeparam>
+    /// <inheritdoc cref="SnowflakeGenerator{T}.SnowflakeGenerator" />
+    public static SnowflakeGenerator<T> Create<T>(params IEnumerable<SnowflakeComponent<T>> components)
+        where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
+    {
+        return new(components);
+    }
+
+    /// <summary>Creates a new generator for signed, 64-bit snowflakes.</summary>
+    /// <inheritdoc cref="Create{T}" />
+    public static SnowflakeGenerator<long> Create(params IEnumerable<SnowflakeComponent<long>> components)
+    {
+        return Create<long>(components);
+    }
+
+    /// <summary>Creates a new generator builder for snowflakes of the specified integer type.</summary>
+    /// <typeparam name="T">The snowflake type.</typeparam>
+    /// <inheritdoc cref="SnowflakeGeneratorBuilder{T}.SnowflakeGeneratorBuilder" />
+    public static SnowflakeGeneratorBuilder<T> CreateBuilder<T>()
+        where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
+    {
+        return new();
+    }
+
+    /// <summary>Creates a new generator builder for signed, 64-bit snowflakes.</summary>
+    /// <inheritdoc cref="CreateBuilder{T}" />
+    public static SnowflakeGeneratorBuilder<long> CreateBuilder()
+    {
+        return CreateBuilder<long>();
+    }
+}
+
+/// <summary>Generates 64-bit Snowflake IDs, also known as snowflakes.</summary>
+/// <typeparam name="T">The snowflake type.</typeparam>
 public sealed class SnowflakeGenerator<T>
     where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
@@ -48,7 +85,7 @@ public sealed class SnowflakeGenerator<T>
     ///     <paramref name="components" /> is empty, contains a null item, contains duplicate items,
     ///     or the sum of its items' lengths exceeds 63 bits.
     /// </exception>
-    public SnowflakeGenerator(IEnumerable<SnowflakeComponent<T>> components)
+    internal SnowflakeGenerator(params IEnumerable<SnowflakeComponent<T>> components)
     {
         ArgumentNullException.ThrowIfNull(components);
 
