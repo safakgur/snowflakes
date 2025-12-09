@@ -26,7 +26,7 @@ jobs:
         run: dotnet format --no-restore --verify-no-changes -v detailed
 
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build --no-restore -c Release -p:ContinuousIntegrationBuild=true
 
       - name: Run tests
         run: >
