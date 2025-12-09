@@ -1,11 +1,11 @@
 ﻿using System.Numerics;
 using System.Security.Cryptography;
 using Snowflakes.Components;
-using static Snowflakes.Tests.Readme.ReadmeCustomComponent;
+using static Snowflakes.Tests.Readme.CustomComponentReadmeExamples;
 
 namespace Snowflakes.Tests.Readme;
 
-public sealed partial class ReadmeCustomComponent : BaseReadme
+public sealed partial class CustomComponentReadmeExamples : BaseReadmeExamples
 {
     // Custom_components_component
     // CONTENT-START
@@ -71,7 +71,7 @@ public static class SnowflakeGeneratorBuilderExtensions
 
 // CONTENT-END
 
-public sealed partial class ReadmeCustomComponent : BaseReadme
+public sealed partial class CustomComponentReadmeExamples : BaseReadmeExamples
 {
     [Fact]
     public void Custom_component_extension()

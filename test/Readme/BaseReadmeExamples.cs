@@ -2,7 +2,7 @@
 
 namespace Snowflakes.Tests.Readme;
 
-public abstract class BaseReadme
+public abstract class BaseReadmeExamples
 {
     protected static readonly SnowflakeGenerator<long> TestSnowflakeGen =
         SnowflakeGenerator.CreateBuilder().AddConstant(1, 1).Build();
