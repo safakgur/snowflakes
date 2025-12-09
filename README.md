@@ -254,12 +254,9 @@ public sealed class RandomSnowflakeComponent<T> : SnowflakeComponent<T>
     public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
         Span<byte> buffer = stackalloc byte[MaxLengthInBytes];
-        while (true)
-        {
-            RandomNumberGenerator.Fill(buffer);
-            if (T.TryReadLittleEndian(buffer, IsUnsigned, out var value))
-                return value;
-        }
+        RandomNumberGenerator.Fill(buffer);
+
+        return T.ReadLittleEndian(buffer, IsUnsigned);
     }
 }
 ```

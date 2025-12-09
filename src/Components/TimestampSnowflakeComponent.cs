@@ -73,7 +73,7 @@ public class TimestampSnowflakeComponent<T> : SnowflakeComponent<T>
 
     /// <summary>
     ///     Gets the number of ticks per unit of time.
-    ///     This determines the precision of the timestamp
+    ///     This determines the precision of the timestamp.
     /// </summary>
     public long TicksPerUnit { get; }
 

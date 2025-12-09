@@ -9,7 +9,7 @@ public sealed class ConstantSnowflakeComponent<T> : SnowflakeComponent<T>
 {
     /// <summary>
     ///     Initializes a new instance of the <see cref="ConstantSnowflakeComponent{T}" /> class
-    ///     that provides the specified value..
+    ///     that provides the specified value.
     /// </summary>
     /// <param name="lengthInBits">
     ///     <inheritdoc cref="SnowflakeComponent{T}.SnowflakeComponent" path="/param[@name='lengthInBits']" />
