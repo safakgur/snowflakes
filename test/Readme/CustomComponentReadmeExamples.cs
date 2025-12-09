@@ -1,37 +1,33 @@
 ﻿using System.Numerics;
 using System.Security.Cryptography;
 using Snowflakes.Components;
-using static Snowflakes.Tests.Readme.CustomComponentReadmeExamples;
 
 namespace Snowflakes.Tests.Readme;
 
-public sealed partial class CustomComponentReadmeExamples : BaseReadmeExamples
+// Custom_components_component
+// CONTENT-START
+
+public sealed class RandomSnowflakeComponent<T> : SnowflakeComponent<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    // Custom_components_component
-    // CONTENT-START
-
-    public sealed class RandomSnowflakeComponent<T> : SnowflakeComponent<T>
-        where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
+    public RandomSnowflakeComponent(int lengthInBits) : base(lengthInBits)
     {
-        public RandomSnowflakeComponent(int lengthInBits) : base(lengthInBits)
-        {
-            AllowTruncation = true;
-        }
-
-        public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
-        {
-            Span<byte> buffer = stackalloc byte[MaxLengthInBytes];
-            while (true)
-            {
-                RandomNumberGenerator.Fill(buffer);
-                if (T.TryReadLittleEndian(buffer, IsUnsigned, out var value))
-                    return value;
-            }
-        }
+        AllowTruncation = true;
     }
 
-    // CONTENT-END
+    public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
+    {
+        Span<byte> buffer = stackalloc byte[MaxLengthInBytes];
+        RandomNumberGenerator.Fill(buffer);
 
+        return T.ReadLittleEndian(buffer, IsUnsigned);
+    }
+}
+
+// CONTENT-END
+
+public sealed partial class CustomComponentReadmeExamples : BaseReadmeExamples
+{
     [Fact]
     public void Custom_component_usage()
     {
