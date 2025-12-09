@@ -8,29 +8,29 @@ public sealed class SnowflakeGeneratorTests
     [Fact]
     public void Ctor_validates_components()
     {
-        var component53Bit = Substitute.For<SnowflakeComponent>(53);
-        var component10Bit = Substitute.For<SnowflakeComponent>(10);
-        var component1Bit = Substitute.For<SnowflakeComponent>(1);
+        var component53Bit = Substitute.For<SnowflakeComponent<long>>(53);
+        var component10Bit = Substitute.For<SnowflakeComponent<long>>(10);
+        var component1Bit = Substitute.For<SnowflakeComponent<long>>(1);
 
         // Null
-        Assert.Throws<ArgumentNullException>("components", () => new SnowflakeGenerator(null!));
+        Assert.Throws<ArgumentNullException>("components", () => new SnowflakeGenerator<long>(null!));
 
         // Empty
-        Assert.Throws<ArgumentException>("components", () => new SnowflakeGenerator([]));
+        Assert.Throws<ArgumentException>("components", () => new SnowflakeGenerator<long>([]));
 
         // Null item
-        Assert.Throws<ArgumentException>("components", () => new SnowflakeGenerator([null!]));
+        Assert.Throws<ArgumentException>("components", () => new SnowflakeGenerator<long>([null!]));
 
         // Dupe item
         Assert.Throws<ArgumentException>("components", () =>
-            new SnowflakeGenerator([component1Bit, component1Bit]));
+            new SnowflakeGenerator<long>(component1Bit, component1Bit));
 
         // Length > 63-bit
         Assert.Throws<ArgumentException>("components", () =>
-            new SnowflakeGenerator([component53Bit, component10Bit, component1Bit]));
+            new SnowflakeGenerator<long>(component53Bit, component10Bit, component1Bit));
 
         // Success
-        var gen = new SnowflakeGenerator([component53Bit, component10Bit]);
+        var gen = new SnowflakeGenerator<long>([component53Bit, component10Bit]);
 
         Assert.Equal([component53Bit, component10Bit], gen.Components.ToArray());
     }
@@ -38,11 +38,40 @@ public sealed class SnowflakeGeneratorTests
     [Fact]
     public void Ctor_sets_itself_as_owner_of_components()
     {
-        var component = new ConstantSnowflakeComponent(1, 1);
+        var component = new ConstantSnowflakeComponent<long>(1, 1);
         Assert.Null(component.Owner);
 
-        var gen = new SnowflakeGenerator([component]);
+        var gen = new SnowflakeGenerator<long>(component);
         Assert.Same(gen, component.Owner);
+    }
+
+    [Fact]
+    public void Create_overloads_pass_parameters_correctly()
+    {
+        var expectedComponent1 = Substitute.For<SnowflakeComponent<long>>(1);
+        var gen1 = SnowflakeGenerator.Create(expectedComponent1);
+
+        var expectedComponent2 = Substitute.For<SnowflakeComponent<long>>(1);
+        var gen2 = SnowflakeGenerator.Create<long>(expectedComponent2);
+
+        var component1 = Assert.Single(gen1.Components.ToArray());
+        var component2 = Assert.Single(gen2.Components.ToArray());
+
+        Assert.Same(expectedComponent1, component1);
+        Assert.Same(expectedComponent2, component2);
+    }
+
+    [Fact]
+    public void CreateBuilder_overloads_create_empty_builders_of_correct_type()
+    {
+        var builder1 = SnowflakeGenerator.CreateBuilder();
+        var builder2 = SnowflakeGenerator.CreateBuilder<long>();
+
+        Assert.IsType<SnowflakeGeneratorBuilder<long>>(builder1);
+        Assert.Empty(builder1.Components);
+
+        Assert.IsType<SnowflakeGeneratorBuilder<long>>(builder2);
+        Assert.Empty(builder2.Components);
     }
 
     [Fact]
@@ -52,7 +81,7 @@ public sealed class SnowflakeGeneratorTests
 
         var countingComponent = new CountingTestSnowflakeComponent();
         var blockingComponent = new BlockingTestSnowflakeComponent();
-        var gen = new SnowflakeGenerator([countingComponent, blockingComponent]);
+        var gen = new SnowflakeGenerator<long>(countingComponent, blockingComponent);
 
         // Get approx. duration for a single run.
         var ts = timeProvider.GetTimestamp();
@@ -90,7 +119,7 @@ public sealed class SnowflakeGeneratorTests
     {
         LastExecutionTestSnowflakeComponent c1 = new(), c2 = new();
 
-        var gen = new SnowflakeGenerator([c1, c2]);
+        var gen = new SnowflakeGenerator<long>(c1, c2);
 
         gen.NewSnowflake();
 
@@ -102,7 +131,7 @@ public sealed class SnowflakeGeneratorTests
     {
         LastExecutionTestSnowflakeComponent c1 = new() { ExecutionOrder = 1 }, c2 = new();
 
-        var gen = new SnowflakeGenerator([c1, c2]);
+        var gen = new SnowflakeGenerator<long>(c1, c2);
 
         gen.NewSnowflake();
 
@@ -129,7 +158,7 @@ public sealed class SnowflakeGeneratorTests
             new() { ExecutionOrder = component2ExecutioOrder }
         ];
 
-        var gen = new SnowflakeGenerator(components);
+        var gen = new SnowflakeGenerator<long>(components);
 
         gen.NewSnowflake();
 
@@ -154,10 +183,10 @@ public sealed class SnowflakeGeneratorTests
         var testTimeProvider = Substitute.For<TimeProvider>();
         testTimeProvider.GetUtcNow().Returns(tweetTime);
 
-        var gen = new SnowflakeGenerator([
-            new TimestampSnowflakeComponent(41, xEpoch, TimeSpan.TicksPerMillisecond, testTimeProvider),
-            new ConstantSnowflakeComponent(10, 0b_01_0111_1010L),
-            new SequenceSnowflakeComponent(12, refComponentIndex: 0)]);
+        var gen = new SnowflakeGenerator<long>(
+            new TimestampSnowflakeComponent<long>(41, xEpoch, TimeSpan.TicksPerMillisecond, testTimeProvider),
+            new ConstantSnowflakeComponent<long>(10, 0b_01_0111_1010L),
+            new SequenceSnowflakeComponent<long>(12, refComponentIndex: 0));
 
         // Expected tweet ID as it was the first tweet processed by the machine at that millisecond
         Assert.Equal(1541815603606036480L, gen.NewSnowflake());
@@ -167,11 +196,11 @@ public sealed class SnowflakeGeneratorTests
     }
 
     public sealed class CountingTestSnowflakeComponent()
-        : SnowflakeComponent(lengthInBits: 1)
+        : SnowflakeComponent<long>(lengthInBits: 1)
     {
         public int Count { get; private set; }
 
-        protected override long CalculateValue(SnowflakeGenerationContext ctx)
+        public override long CalculateValue(SnowflakeGenerationContext<long> ctx)
         {
             Count++;
 
@@ -182,13 +211,13 @@ public sealed class SnowflakeGeneratorTests
     }
 
     public sealed class BlockingTestSnowflakeComponent()
-        : SnowflakeComponent(lengthInBits: 1)
+        : SnowflakeComponent<long>(lengthInBits: 1)
     {
         private readonly AutoResetEvent _event = new(initialState: false);
 
         public void AllowOne() => _event.Set();
 
-        protected override long CalculateValue(SnowflakeGenerationContext ctx)
+        public override long CalculateValue(SnowflakeGenerationContext<long> ctx)
         {
             _event.WaitOne();
 
@@ -197,11 +226,11 @@ public sealed class SnowflakeGeneratorTests
     }
 
     public sealed class LastExecutionTestSnowflakeComponent()
-        : SnowflakeComponent(lengthInBits: 1)
+        : SnowflakeComponent<long>(lengthInBits: 1)
     {
         public long LastExecutionTimestamp { get; private set; }
 
-        protected override long CalculateValue(SnowflakeGenerationContext ctx)
+        public override long CalculateValue(SnowflakeGenerationContext<long> ctx)
         {
             var timeProvider = TimeProvider.System;
 

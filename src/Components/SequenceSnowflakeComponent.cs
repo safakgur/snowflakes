@@ -1,4 +1,6 @@
-﻿namespace Snowflakes.Components;
+﻿using System.Numerics;
+
+namespace Snowflakes.Components;
 
 /// <summary>
 ///     <para>Provides a sequence number to be placed in a snowflake.</para>
@@ -8,21 +10,23 @@
 ///         number is incremented; otherwise, the sequence number is reset to 0.
 ///     </para>
 /// </summary>
-public sealed class SequenceSnowflakeComponent : SnowflakeComponent
+/// <typeparam name="T">The snowflake type.</typeparam>
+public sealed class SequenceSnowflakeComponent<T> : SnowflakeComponent<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    private long? _refComponentValue;
-    private long _seq = -1;
+    private T? _refComponentValue;
+    private T _seq;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="SequenceSnowflakeComponent" /> class.
+    ///     Initializes a new instance of the <see cref="SequenceSnowflakeComponent{T}" /> class.
     /// </summary>
     /// <param name="lengthInBits">
-    ///     <inheritdoc cref="SnowflakeComponent.SnowflakeComponent" path="/param[@name='lengthInBits']" />
+    ///     <inheritdoc cref="SnowflakeComponent{T}.SnowflakeComponent" path="/param[@name='lengthInBits']" />
     /// </param>
     /// <param name="refComponentIndex">
     ///     <para>
-    ///         The zero-based index of the component added to <see cref="SnowflakeGenerator" />
-    ///         that this component will check the <see cref="SnowflakeComponent.LastValue" />
+    ///         The zero-based index of the component added to <see cref="SnowflakeGenerator{T}" />
+    ///         that this component will check the <see cref="SnowflakeComponent{T}.LastValue" />
     ///         property of.
     ///     </para>
     ///     <para>
@@ -31,7 +35,7 @@ public sealed class SequenceSnowflakeComponent : SnowflakeComponent
     ///     </para>
     /// </param>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///     <inheritdoc cref="SnowflakeComponent.SnowflakeComponent" path="/exception[@cref='ArgumentOutOfRangeException']"/>
+    ///     <inheritdoc cref="SnowflakeComponent{T}.SnowflakeComponent" path="/exception[@cref='ArgumentOutOfRangeException']"/>
     ///     -or-
     ///     <paramref name="refComponentIndex"/> is negative.
     /// </exception>
@@ -48,13 +52,13 @@ public sealed class SequenceSnowflakeComponent : SnowflakeComponent
     public int ReferenceComponentIndex { get; }
 
     /// <inheritdoc />
-    protected override long CalculateValue(SnowflakeGenerationContext ctx)
+    public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
         var refComponentLastValue = ctx.Components[ReferenceComponentIndex].LastValue;
         if (refComponentLastValue == _refComponentValue)
             return checked(++_seq);
 
-        _seq = 0;
+        _seq = T.Zero;
         _refComponentValue = refComponentLastValue;
 
         return _seq;

@@ -1,62 +1,229 @@
-﻿using System.Reflection;
-
-namespace Snowflakes.Tests;
-
-#pragma warning disable CS0618 // Type or member is obsolete
+﻿namespace Snowflakes.Tests;
 
 public sealed class SnowflakeEncoderTests
 {
-    public static TheoryData<SnowflakeEncoder> AllEncoders { get; } = new(
-        SnowflakeEncoder.Base36UpperOrdinal,
-        SnowflakeEncoder.Base36Upper,
-        SnowflakeEncoder.Base36LowerOrdinal,
-        SnowflakeEncoder.Base36Lower,
-        SnowflakeEncoder.Base62Ordinal,
-        SnowflakeEncoder.Base62,
-        SnowflakeEncoder.Base64Ordinal,
-        SnowflakeEncoder.Base64Snow);
+    private static readonly SnowflakeEncoder s_defaultEncoder = SnowflakeEncoder.Base62Ordinal;
 
-    [Theory]
-    [MemberData(nameof(AllEncoders))]
-    public void Encode_throws_when_snowflake_is_negative(SnowflakeEncoder encoder)
+    [Fact]
+    public void Ctor_throws_when_digits_is_null()
     {
-        Assert.Throws<ArgumentOutOfRangeException>("snowflake", () => encoder.Encode(-1));
+        Assert.Throws<ArgumentNullException>("digits", () => new SnowflakeEncoder(null!));
     }
 
     [Theory]
-    [MemberData(nameof(AllEncoders))]
-    public void Decode_throws_when_encodedSnowflake_is_null(SnowflakeEncoder encoder)
+    [InlineData("", false)]
+    [InlineData("0", false)]
+    [InlineData("01", true)]
+    public void Ctor_throws_when_digits_has_fewer_than_two_characters(string digits, bool isValid)
     {
-        Assert.Throws<ArgumentNullException>("encodedSnowflake", () => encoder.Decode(null!));
+        if (isValid)
+            _ = new SnowflakeEncoder(digits);
+        else
+            Assert.Throws<ArgumentException>(nameof(digits), () => new SnowflakeEncoder(digits));
+    }
+
+    [Fact]
+    public void Ctor_throws_when_digits_has_duplicates()
+    {
+        Assert.Throws<ArgumentException>("digits", () => new SnowflakeEncoder("0120"));
+    }
+
+    [Fact]
+    public void Encode_throws_when_snowflake_is_negative()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>("snowflake", () => s_defaultEncoder.Encode(-1U));
+
+        Assert.Throws<ArgumentOutOfRangeException>("snowflake", () => s_defaultEncoder.Encode(-1));
+    }
+
+    [Fact]
+    public void Encode_returns_cached_zero()
+    {
+        var zero1 = s_defaultEncoder.Encode<byte>(0);
+        var zero2 = s_defaultEncoder.Encode<long>(0);
+
+        Assert.Same(zero1, zero2);
     }
 
     [Theory]
-    [MemberData(nameof(AllEncoders))]
-    public void Decode_throws_when_encodedSnowflake_is_empty_or_invalid(SnowflakeEncoder encoder)
+    [InlineData(255, new[] { 1, 0 })]
+    [InlineData(256, new[] { 255 })]
+    [InlineData(257, new[] { 255 })]
+    public void Encode_works_as_expected_around_digit_length_boundary(int digitCount, int[] expectedDigitIndexes)
     {
-        Assert.Throws<FormatException>(() => encoder.Decode(string.Empty));
-        Assert.Throws<FormatException>(() => encoder.Decode(" "));
-        Assert.Throws<FormatException>(() => encoder.Decode("*"));
+        char[] digits = [.. Enumerable.Range('A', digitCount).Select(i => (char)i)];
+        var encoder = new SnowflakeEncoder(new(digits));
+        var expectedEncoded = new string([.. expectedDigitIndexes.Select(i => digits[i])]);
+
+        var encoded = encoder.Encode(byte.MaxValue);
+
+        Assert.Equal(expectedEncoded, encoded);
+    }
+
+    [Fact]
+    public void Decode_throws_when_encodedSnowflake_is_null()
+    {
+        Assert.Throws<ArgumentNullException>("encodedSnowflake", () => s_defaultEncoder.Decode<long>(null!));
+
+        Assert.Throws<ArgumentNullException>("encodedSnowflake", () => s_defaultEncoder.Decode(null!));
+
+        Assert.Throws<ArgumentNullException>("encodedSnowflake", () => s_defaultEncoder.Decode<int>(null!));
+    }
+
+    [Fact]
+    public void Decode_throws_when_encodedSnowflake_is_empty_or_invalid()
+    {
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode<long>(string.Empty));
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode(string.Empty));
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode<int>(string.Empty));
+
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode<long>(" "));
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode(" "));
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode<int>(" "));
+
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode<long>("*"));
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode("*"));
+        Assert.Throws<FormatException>(() => s_defaultEncoder.Decode<int>("*"));
+    }
+
+    [Fact]
+    public void Decode_throws_when_encodedSnowflake_is_too_big()
+    {
+        var encoded = s_defaultEncoder.Encode(byte.MaxValue + 1);
+
+        Assert.Throws<OverflowException>(() => s_defaultEncoder.Decode<byte>(encoded));
     }
 
     [Theory]
-    [InlineData(new[] { nameof(SnowflakeEncoder.Base36UpperOrdinal), nameof(SnowflakeEncoder.Base36Upper) }, "1Y2P0IJ32E8E7", "1Y2P0IJ32E8E8")]
-    [InlineData(new[] { nameof(SnowflakeEncoder.Base36LowerOrdinal), nameof(SnowflakeEncoder.Base36Lower) }, "1y2p0ij32e8e7", "1y2p0ij32e8e8")]
-    [InlineData(new[] { nameof(SnowflakeEncoder.Base62Ordinal), nameof(SnowflakeEncoder.Base62) }, "AzL8n0Y58m7", "AzL8n0Y58m8")]
-    [InlineData(new[] { nameof(SnowflakeEncoder.Base64Ordinal), nameof(SnowflakeEncoder.Base64Snow) }, "6zzzzzzzzzz", "7zzzzzzzzz-")]
-    public void Decode_throws_when_encodedSnowflake_is_too_big(
-         string[] encoderNames, string maxEncoded, string maxPlusOneEncoded)
+    [InlineData(0, "-")]
+    [InlineData(byte.MaxValue, "2z")]
+    public void Can_encode_and_decode_Byte(byte snowflake, string expectedEncoded)
     {
-        Assert.All(encoderNames, encoderName =>
-        {
-            var encoder = (SnowflakeEncoder)typeof(SnowflakeEncoder)
-                .GetProperty(encoderName, BindingFlags.Public | BindingFlags.Static)!
-                .GetValue(obj: null)!;
+        var encoder = SnowflakeEncoder.Base64Ordinal;
 
-            var maxDecoded = encoder.Decode(maxEncoded);
-            Assert.Equal(long.MaxValue, maxDecoded);
-            Assert.Throws<OverflowException>(() => encoder.Decode(maxPlusOneEncoded));
-        });
+        var encoded = encoder.Encode(snowflake);
+
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<byte>(encoded);
+
+        Assert.Equal(snowflake, decoded);
+    }
+
+    [Theory]
+    [InlineData(0, "-")]
+    [InlineData(sbyte.MaxValue, "0z")]
+    public void Can_encode_and_decode_SByte(sbyte snowflake, string expectedEncoded)
+    {
+        var encoder = SnowflakeEncoder.Base64Ordinal;
+
+        var encoded = encoder.Encode(snowflake);
+
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<sbyte>(encoded);
+
+        Assert.Equal(snowflake, decoded);
+    }
+
+    [Theory]
+    [InlineData(0, "-")]
+    [InlineData(short.MaxValue, "6zz")]
+    public void Can_encode_and_decode_Int16(short snowflake, string expectedEncoded)
+    {
+        var encoder = SnowflakeEncoder.Base64Ordinal;
+
+        var encoded = encoder.Encode(snowflake);
+
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<short>(encoded);
+
+        Assert.Equal(snowflake, decoded);
+    }
+
+    [Theory]
+    [InlineData(0, "-")]
+    [InlineData(ushort.MaxValue, "Ezz")]
+    public void Can_encode_and_decode_UInt16(ushort snowflake, string expectedEncoded)
+    {
+        var encoder = SnowflakeEncoder.Base64Ordinal;
+
+        var encoded = encoder.Encode(snowflake);
+
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<ushort>(encoded);
+
+        Assert.Equal(snowflake, decoded);
+    }
+
+    [Theory]
+    [InlineData(0, "-")]
+    [InlineData(int.MaxValue, "0zzzzz")]
+    public void Can_encode_and_decode_Int32(int snowflake, string expectedEncoded)
+    {
+        var encoder = SnowflakeEncoder.Base64Ordinal;
+
+        var encoded = encoder.Encode(snowflake);
+
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<int>(encoded);
+
+        Assert.Equal(snowflake, decoded);
+    }
+
+    [Theory]
+    [InlineData(0, "-")]
+    [InlineData(uint.MaxValue, "2zzzzz")]
+    public void Can_encode_and_decode_UInt32(uint snowflake, string expectedEncoded)
+    {
+        var encoder = SnowflakeEncoder.Base64Ordinal;
+
+        var encoded = encoder.Encode(snowflake);
+
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<uint>(encoded);
+
+        Assert.Equal(snowflake, decoded);
+    }
+
+    [Theory]
+    [InlineData(0, "-")]
+    [InlineData(long.MaxValue, "6zzzzzzzzzz")]
+    public void Can_encode_and_decode_Int64(long snowflake, string expectedEncoded)
+    {
+        var encoder = SnowflakeEncoder.Base64Ordinal;
+
+        var encoded = encoder.Encode(snowflake);
+
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<long>(encoded);
+
+        Assert.Equal(snowflake, decoded);
+
+        decoded = encoder.Decode(encoded);
+
+        Assert.Equal(snowflake, decoded);
+    }
+
+    [Theory]
+    [InlineData(0, "-")]
+    [InlineData(ulong.MaxValue, "Ezzzzzzzzzz")]
+    public void Can_encode_and_decode_UInt64(ulong snowflake, string expectedEncoded)
+    {
+        var encoder = SnowflakeEncoder.Base64Ordinal;
+
+        var encoded = encoder.Encode(snowflake);
+
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<ulong>(encoded);
+
+        Assert.Equal(snowflake, decoded);
     }
 
     [Theory]
@@ -69,16 +236,18 @@ public sealed class SnowflakeEncoderTests
     [InlineData(5013014052624339181, "123456789ABCD")]
     [InlineData(1899220601727276649, "EFGHIJKLMNOP")]
     [InlineData(2718988031752955, "QRSTUVWXYZ")]
-    public void Base36Upper_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
+    public void Base36UpperOrdinal_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
     {
-        Assert.All([SnowflakeEncoder.Base36UpperOrdinal, SnowflakeEncoder.Base36Upper], encoder =>
-        {
-            var encoded = encoder.Encode(value);
-            Assert.Equal(expectedEncoded, encoded);
+        var encoder = SnowflakeEncoder.Base36UpperOrdinal;
 
-            var decoded = encoder.Decode(encoded);
-            Assert.Equal(value, decoded);
-        });
+        var encoded = encoder.Encode(value);
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<long>(encoded);
+        Assert.Equal(value, decoded);
+
+        decoded = encoder.Decode(encoded);
+        Assert.Equal(value, decoded);
     }
 
     [Theory]
@@ -91,16 +260,18 @@ public sealed class SnowflakeEncoderTests
     [InlineData(5013014052624339181, "123456789abcd")]
     [InlineData(1899220601727276649, "efghijklmnop")]
     [InlineData(2718988031752955, "qrstuvwxyz")]
-    public void Base36Lower_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
+    public void Base36LowerOrdinal_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
     {
-        Assert.All([SnowflakeEncoder.Base36LowerOrdinal, SnowflakeEncoder.Base36Lower], encoder =>
-        {
-            var encoded = encoder.Encode(value);
-            Assert.Equal(expectedEncoded, encoded);
+        var encoder = SnowflakeEncoder.Base36LowerOrdinal;
 
-            var decoded = encoder.Decode(encoded);
-            Assert.Equal(value, decoded);
-        });
+        var encoded = encoder.Encode(value);
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<long>(encoded);
+        Assert.Equal(value, decoded);
+
+        decoded = encoder.Decode(encoded);
+        Assert.Equal(value, decoded);
     }
 
     [Theory]
@@ -119,16 +290,18 @@ public sealed class SnowflakeEncoderTests
     [InlineData(440513749406307029, "WXYZabcdef")]
     [InlineData(578103809384723459, "ghijklmnop")]
     [InlineData(715693869363139889, "qrstuvwxyz")]
-    public void Base62_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
+    public void Base62Ordinal_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
     {
-        Assert.All([SnowflakeEncoder.Base62Ordinal, SnowflakeEncoder.Base62], encoder =>
-        {
-            var encoded = encoder.Encode(value);
-            Assert.Equal(expectedEncoded, encoded);
+        var encoder = SnowflakeEncoder.Base62Ordinal;
 
-            var decoded = encoder.Decode(encoded);
-            Assert.Equal(value, decoded);
-        });
+        var encoded = encoder.Encode(value);
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<long>(encoded);
+        Assert.Equal(value, decoded);
+
+        decoded = encoder.Decode(encoded);
+        Assert.Equal(value, decoded);
     }
 
     [Theory]
@@ -151,17 +324,17 @@ public sealed class SnowflakeEncoderTests
     [InlineData(768904818013183155, "efghijklmn")]
     [InlineData(951908231442841405, "opqrstuvwx")]
     [InlineData(4031, "yz")]
-    public void Base64Snow_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
+    public void Base64Ordinal_Encode_and_Decode_work_correctly(long value, string expectedEncoded)
     {
-        Assert.All([SnowflakeEncoder.Base64Ordinal, SnowflakeEncoder.Base64Snow], encoder =>
-        {
-            var encoded = encoder.Encode(value);
-            Assert.Equal(expectedEncoded, encoded);
+        var encoder = SnowflakeEncoder.Base64Ordinal;
 
-            var decoded = encoder.Decode(encoded);
-            Assert.Equal(value, decoded);
-        });
+        var encoded = encoder.Encode(value);
+        Assert.Equal(expectedEncoded, encoded);
+
+        var decoded = encoder.Decode<long>(encoded);
+        Assert.Equal(value, decoded);
+
+        decoded = encoder.Decode(encoded);
+        Assert.Equal(value, decoded);
     }
 }
-
-#pragma warning restore CS0618 // Type or member is obsolete
