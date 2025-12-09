@@ -4,16 +4,18 @@
 [![CodeQL Advanced][wf-codeql-badge]][wf-codeql]
 [![NuGet][nuget-badge]][nuget]
 
-Snowflake IDs are 64-bit, unique, sortable identifiers that can be generated in a distributed system
+Snowflake IDs are typically 64-bit, unique, sortable identifiers that can be generated in a distributed system
 without a central authority. The format was [originally created by Twitter (now X)][twitter-announcement]
 and adopted by others like [Sony][sonyflake], [Discord][discord-snowflakes], [Instagram][instagram-sharding-and-ids], and more.
 
 This .NET library lets you create customized snowflakes by configuring the components:
-timestamp, sequence, and instance ID.
+Timestamp, Sequence, and Instance ID, using any integer type.
 
 ## Layout
 
-Snowflakes are 64-bit IDs, but only 63 bits are used for one to fit in a signed integer.
+Traditional snowflakes are 64-bit IDs, where only 63 bits are used for one to fit in a signed
+integer. The library defaults to `long`/`Int64` snowflakes for maximum compatibility, but allows
+other integer types to be used when desired. There are examples of this later in this document.
 
 There are three standard components that make up a snowflake:
 
@@ -48,7 +50,7 @@ var epoch = DateTimeOffset.FromUnixTimeMilliseconds(1288834974657);
 var instanceId = 0;
 
 // Create the generator.
-var snowflakeGen = new SnowflakeGeneratorBuilder()
+var snowflakeGen = SnowflakeGenerator.CreateBuilder()
     .AddTimestamp(41, epoch, TimeSpan.TicksPerMillisecond)
     .AddConstant(10, instanceId)
     .AddSequenceForTimestamp(12)
@@ -62,14 +64,14 @@ var snowflakeGen = new SnowflakeGeneratorBuilder()
 16-bit instance ID
 
 ```csharp
- // Choose an epoch, e.g., when your system came online. Epoch can't be in the future.
+// Choose an epoch, e.g., when your system came online. Epoch can't be in the future.
 var epoch = new DateTimeOffset(2024, 8, 30, 0, 0, 0, TimeSpan.Zero);
 
 // Set the instance ID, e.g., the ordinal index of a K8 pod.
 var instanceId = 0;
 
 // Create the generator.
-var snowflakeGen = new SnowflakeGeneratorBuilder()
+var snowflakeGen = SnowflakeGenerator.CreateBuilder()
     .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10) // 10 ms increments
     .AddSequenceForTimestamp(8)
     .AddConstant(16, instanceId)
@@ -102,7 +104,7 @@ var snowflake2 = snowflakeGen.NewSnowflake();
 // ...
 ```
 
-Try to keep snowflakes as `Int64` values and use the appropriate integer type when persisting them to a database.
+Try to keep snowflakes as integer values and use the appropriate type when persisting them to a database.
 This will ensure they are stored efficiently and remain sortable.
 
 ### Encoding Snowflakes
@@ -119,7 +121,7 @@ var encodedSnowflake = encoder.Encode(snowflake); // "ddw3cbIG"
 var decodedSnowflake = encoder.Decode(encodedSnowflake); // 139611368062976
 ```
 
-Make sure you decode the values back to `Int64` before sorting or persisting them.
+Make sure you decode a snowflake back to integer before sorting or persisting it.
 
 ### Dependency Injection
 
@@ -144,7 +146,7 @@ services.AddSingleton(static serviceProvider =>
     var instanceId = programOpts.InstanceId;
 
     // The generator below uses the Sonyflake configuration.
-    return new SnowflakeGeneratorBuilder()
+    return SnowflakeGenerator.CreateBuilder()
         .AddTimestamp(39, epoch, TimeSpan.TicksPerMillisecond * 10, timeProvider)
         .AddSequenceForTimestamp(8)
         .AddConstant(16, instanceId)
@@ -157,7 +159,7 @@ Consider [keyed registrations][dotnet-di-keyed] if your application needs to gen
 Once registered, you can inject and use the generator like any other dependency.
 
 ```csharp
-public class FooService(SnowflakeGenerator snowflakeGen)
+public class FooService(SnowflakeGenerator<long> snowflakeGen)
 {
     public Foo CreateFoo() => new()
     {
@@ -168,6 +170,47 @@ public class FooService(SnowflakeGenerator snowflakeGen)
 ```
 
 ### Advanced
+
+#### Custom-Size Snowflakes
+
+Snowflakes are traditionally 64-bit integers, signed in most implementations but unsigned in others
+(like Discord's). While this library defaults to `long`/`Int64` for maximum compatibility, it also
+allows you to use any integer type that satisfies the constraint,
+`where T : struct, IBinaryInteger<T>, IMinMaxValue<T>`. All common integer types in .NET (other than
+`BigInteger`, which doesn't implement `IMinMaxValue<T>`) fall into this group.
+
+You can specify a custom type by using the generic `SnowflakeGenerator.Create*` overloads.
+
+```csharp
+// No generic type argument - defaults to a builder to 64-bit signed snowflakes.
+SnowflakeGenerator.CreateBuilder();
+
+// Same as above, but the type is specified explicitly.
+SnowflakeGenerator.CreateBuilder<long>();
+
+// Same size, but unsigned, so we get to use one extra bit.
+SnowflakeGenerator.CreateBuilder<ulong>();
+
+// Builders to generate 32-bit signed and unsigned snowflakes - half the default size.
+SnowflakeGenerator.CreateBuilder<int>();
+SnowflakeGenerator.CreateBuilder<uint>();
+
+// Builders to generate 128-bit signed and unsigned snowflakes - double the default size.
+SnowflakeGenerator.CreateBuilder<Int128>();
+SnowflakeGenerator.CreateBuilder<UInt128>();
+
+// + sbyte, byte, short, ushort, and any other binary integer implementation.
+```
+
+`SnowflakeEncoder` also supports specifying the snowflake type.
+
+```csharp
+// No generic type argument - defaults to decoding into a 64-bit signed integer.
+SnowflakeEncoder.Base62Ordinal.Decode(encodedSnowflake);
+
+// Same as above, but the type is specified explicitly.
+SnowflakeEncoder.Base62Ordinal.Decode<long>(encodedSnowflake);
+```
 
 #### Blocking Timestamp Generation
 
@@ -183,7 +226,7 @@ frequently need to wait for the next timestamp unit to become available. On the 
 sequence numbers means more bits are available for the timestamp, allowing for smaller units.
 
 ```csharp
-var gen = new SnowflakeGeneratorBuilder()
+var snowflakeGen = SnowflakeGenerator.CreateBuilder()
     .AddBlockingTimestamp(44, epoch, TimeSpan.TicksPerMillisecond / 2)
     .AddConstant(19, instanceId)
     .Build();
@@ -200,15 +243,20 @@ but it also allows you to create your own components by subclassing `SnowflakeCo
 Below is an example custom component that provides random bits.
 
 ```csharp
-public sealed class RandomSnowflakeComponent(int lengthInBits)
-    : SnowflakeComponent(lengthInBits)
+public sealed class RandomSnowflakeComponent<T> : SnowflakeComponent<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    protected override long CalculateValue(SnowflakeGenerationContext ctx)
+    public RandomSnowflakeComponent(int lengthInBits) : base(lengthInBits)
     {
-        Span<byte> buffer = stackalloc byte[sizeof(long)];
+        AllowTruncation = true;
+    }
+
+    public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
+    {
+        Span<byte> buffer = stackalloc byte[MaxLengthInBytes];
         RandomNumberGenerator.Fill(buffer);
 
-        return BinaryPrimitives.ReadInt64LittleEndian(buffer);
+        return T.ReadLittleEndian(buffer, IsUnsigned);
     }
 }
 ```
@@ -216,31 +264,80 @@ public sealed class RandomSnowflakeComponent(int lengthInBits)
 You can configure a snowflake generator to use any `SnowflakeComponent` implementation.
 
 ```csharp
-var epoch = new DateTimeOffset(2024, 10, 20, 14, 56, 0, TimeSpan.Zero);
-var snowflakgeGen = new SnowflakeGeneratorBuilder()
+var snowflakeGen = SnowflakeGenerator.CreateBuilder()
     .AddTimestamp(30, epoch)
-    .Add(new RandomSnowflakeComponent(33)) // Here we add our custom component
+    .Add(new RandomSnowflakeComponent<long>(33)) // Here we add our custom component
     .Build();
 
 // High 30 bits have milliseconds elapsed since `epoch` while low 33 bits are random.
-// Similar to a version 7 UUID, albeit smaller.
-var snowflake = snowflakgeGen.NewSnowflake();
+// Similar to a version 7 UUID, albeit with a smaller range.
+var snowflake = snowflakeGen.NewSnowflake();
 ```
 
-If you're feeling fancy, you can also write an extension method for `SnowflakeGeneratorBuilder`
-to allow usage like `AddRandom(33)`.
+If you're feeling fancy, you can also write an extension method for `SnowflakeGeneratorBuilder`.
 
 ```csharp
 public static class SnowflakeGeneratorBuilderExtensions
 {
-    public static SnowflakeGeneratorBuilder AddRandom(
-        this SnowflakeGeneratorBuilder builder, int lengthInBits)
+    public static SnowflakeGeneratorBuilder<T> AddRandom<T>(
+        this SnowflakeGeneratorBuilder<T> builder, int lengthInBits)
+        where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        return builder.Add(new RandomSnowflakeComponent(lengthInBits));
+        return builder.Add(new RandomSnowflakeComponent<T>(lengthInBits));
     }
 }
+```
+
+The extension we created above allows usage like `AddRandom(33)`.
+
+```csharp
+var snowflakeGen = SnowflakeGenerator.CreateBuilder()
+    .AddTimestamp(30, epoch)
+    .AddRandom(33) // Extension method
+    .Build();
+```
+
+#### Snowflake Generation in Tests
+
+You can't mock `SnowflakeGenerator` itself as it is sealed, but you can easily create instances
+of it that return constant test data.
+
+```csharp
+var testSnowflakeGen = SnowflakeGenerator.CreateBuilder()
+    .AddConstant(63, 123L)
+    .Build();
+
+// `testSnowflakeGen.NewSnowflake()` will always return 123.
+```
+
+If you want your test snowflake generation to be dynamic, you can mock (or inherit from) `SnowflakeComponent`.
+
+```csharp
+var random = new Random();
+
+// NSubstitute example
+var testComponent = Substitute.For<SnowflakeComponent<long>>(31);
+testComponent
+    .CalculateValue(Arg.Any<SnowflakeGenerationContext<long>>())
+    .Returns(call =>
+    {
+        // Context can be used to access other components of the generator.
+        // var ctx = call.Arg<SnowflakeGenerationContext<long>>();
+        // var timestampLastValue = ctx.Components[0].LastValue;
+
+        // Return any value for tests.
+        return random.Next();
+    });
+
+// Assuming we have a test time provider
+var timeProvider = TestTimeProvider.Frozen;
+var testEpoch = timeProvider.GetUtcNow().AddDays(-10);
+var testSnowflakeGen = SnowflakeGenerator.CreateBuilder()
+    .AddTimestamp(32, testEpoch, timeProvider: timeProvider)
+    .Add(testComponent)
+    .Build();
 ```
 
 ## Support
@@ -271,6 +368,6 @@ For security bugs and vulnerabilities, please see [SECURITY.md](SECURITY.md).
 [discord-snowflakes]: https://discord.com/developers/docs/reference#snowflakes "Discord Developer Portal"
 [instagram-sharding-and-ids]: https://instagram-engineering.com/sharding-ids-at-instagram-1cf5a71e5a5c "Sharding & IDs at Instagram"
 
-[dotnet-di-keyed]: https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection#keyed-services ".NET Dependency Injection"
+[dotnet-di-keyed]: https://learn.microsoft.com/dotnet/core/extensions/dependency-injection#keyed-services ".NET Dependency Injection"
 
 [issues-ask]: https://github.com/safakgur/snowflakes/issues/new?labels=question

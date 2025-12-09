@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 
 namespace Snowflakes.Components;
 
@@ -7,22 +8,23 @@ namespace Snowflakes.Components;
 ///     When a new snowflake is requested within the same unit of time, this component will block
 ///     the current thread until the next unit of time is reached.
 /// </remarks>
-/// <inheritdoc cref="TimestampSnowflakeComponent.TimestampSnowflakeComponent" />
-public sealed class BlockingTimestampSnowflakeComponent(
+/// <inheritdoc cref="TimestampSnowflakeComponent{T}.TimestampSnowflakeComponent" />
+public sealed class BlockingTimestampSnowflakeComponent<T>(
     int lengthInBits,
     DateTimeOffset epoch,
     long ticksPerUnit = TimeSpan.TicksPerMillisecond,
     TimeProvider? timeProvider = null)
-    : TimestampSnowflakeComponent(lengthInBits, epoch, ticksPerUnit, timeProvider)
+    : TimestampSnowflakeComponent<T>(lengthInBits, epoch, ticksPerUnit, timeProvider)
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private readonly TimeSpan _unitDuration = TimeSpan.FromTicks(ticksPerUnit);
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private long? _lastValue;
+    private T? _lastValue;
 
     /// <inheritdoc />
-    protected override long CalculateValue(SnowflakeGenerationContext ctx)
+    public override T CalculateValue(SnowflakeGenerationContext<T> ctx)
     {
         for (var i = 0; true; i++)
         {

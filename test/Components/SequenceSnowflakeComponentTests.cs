@@ -1,25 +1,10 @@
-﻿using Snowflakes.Components;
+﻿using System.Numerics;
+using Snowflakes.Components;
 
 namespace Snowflakes.Tests.Components;
 
 public sealed class SequenceSnowflakeComponentTests
 {
-    [Theory]
-    [MemberData(nameof(SnowflakeComponentTests.LengthInBits_IsValid_Data), MemberType = typeof(SnowflakeComponentTests))]
-    public void Ctor_validates_lengthInBits(int lengthInBits, bool isValid)
-    {
-        if (isValid)
-        {
-            var component = new SequenceSnowflakeComponent(lengthInBits, refComponentIndex: 0);
-            Assert.Equal(lengthInBits, component.LengthInBits);
-        }
-        else
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
-                new SequenceSnowflakeComponent(lengthInBits, refComponentIndex: 0));
-        }
-    }
-
     [Theory]
     [InlineData(1, -1, false)]
     [InlineData(1, 1, true)]
@@ -31,20 +16,20 @@ public sealed class SequenceSnowflakeComponentTests
     {
         if (isValid)
         {
-            var component = new SequenceSnowflakeComponent(lengthInBits, refComponentIndex);
+            var component = new SequenceSnowflakeComponent<long>(lengthInBits, refComponentIndex);
             Assert.Equal(refComponentIndex, component.ReferenceComponentIndex);
         }
         else
         {
             Assert.Throws<ArgumentOutOfRangeException>(nameof(refComponentIndex), () =>
-                new SequenceSnowflakeComponent(lengthInBits, refComponentIndex));
+                new SequenceSnowflakeComponent<long>(lengthInBits, refComponentIndex));
         }
     }
 
     [Fact]
     public void GetValue_returns_correcly_incremented_and_reset_sequence()
     {
-        var component = new SequenceSnowflakeComponent(lengthInBits: 4, refComponentIndex: 0);
+        var component = new SequenceSnowflakeComponent<long>(lengthInBits: 4, refComponentIndex: 0);
 
         // First
         var value = GetValueForRefComponentValue(0);
@@ -64,8 +49,8 @@ public sealed class SequenceSnowflakeComponentTests
 
         long GetValueForRefComponentValue(int refComponentValue)
         {
-            var refComponent = new ConstantSnowflakeComponent(lengthInBits: 10, value: refComponentValue);
-            var ctx = new SnowflakeGenerationContext([refComponent, component]);
+            var refComponent = new ConstantSnowflakeComponent<long>(lengthInBits: 10, value: refComponentValue);
+            var ctx = new SnowflakeGenerationContext<long>(refComponent, component);
 
             _ = refComponent.GetValue(ctx);
 
@@ -76,13 +61,40 @@ public sealed class SequenceSnowflakeComponentTests
     [Fact]
     public void GetValue_throws_when_calculated_value_is_out_of_range()
     {
-        var component = new SequenceSnowflakeComponent(lengthInBits: 1, refComponentIndex: 0);
+        var component = new SequenceSnowflakeComponent<long>(lengthInBits: 1, refComponentIndex: 0);
 
-        var refComponent = new ConstantSnowflakeComponent(lengthInBits: 1, value: 1);
-        var ctx = new SnowflakeGenerationContext([refComponent, component]);
+        var refComponent = new ConstantSnowflakeComponent<long>(lengthInBits: 1, value: 1);
+        var ctx = new SnowflakeGenerationContext<long>(refComponent, component);
 
         Assert.Equal(0, component.GetValue(ctx));
         Assert.Equal(1, component.GetValue(ctx));
         Assert.Throws<OverflowException>(() => component.GetValue(ctx));
+    }
+
+    [Fact]
+    public void Can_be_used_with_built_in_integer_types()
+    {
+        Test<sbyte>();
+        Test<byte>();
+        Test<short>();
+        Test<ushort>();
+        Test<int>();
+        Test<uint>();
+        Test<long>();
+        Test<ulong>();
+        Test<Int128>();
+        Test<UInt128>();
+
+        static void Test<T>()
+            where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
+        {
+            var refComponent = new ConstantSnowflakeComponent<T>(lengthInBits: 1, value: T.Zero);
+            var component = new SequenceSnowflakeComponent<T>(lengthInBits: 7, refComponentIndex: 0);
+
+            var ctx = new SnowflakeGenerationContext<T>(refComponent, component);
+
+            for (var i = 0; i < 7; i++)
+                Assert.Equal(T.CreateChecked(i), component.GetValue(ctx));
+        }
     }
 }

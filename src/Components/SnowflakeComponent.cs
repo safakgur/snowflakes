@@ -1,12 +1,14 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 
 namespace Snowflakes.Components;
 
 /// <summary>
 ///     Provides a base class for components that produce parts that make up snowflakes.
 /// </summary>
+/// <typeparam name="T">The snowflake type.</typeparam>
 /// <remarks>
-///     Snowflake components are used by <seealso cref="SnowflakeGenerator" />.
+///     Snowflake components are used by <seealso cref="SnowflakeGenerator{T}" />.
 ///     <list type="bullet">
 ///         <item>
 ///             A component instance should only be supplied to a single generator as components
@@ -23,19 +25,46 @@ namespace Snowflakes.Components;
 ///         </item>
 ///     </list>
 /// </remarks>
-public abstract class SnowflakeComponent
+public abstract class SnowflakeComponent<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    internal const int MaxLengthInBits = 63;
-
-    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private readonly long _mask;
-
-    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private SnowflakeGenerator? _owner;
+    /// <summary>
+    ///     Represents the maximum number of bits that can be stored by an instance of
+    ///     type <typeparamref name="T" /> for snowflake generation.
+    /// </summary>
+    /// <remarks>
+    ///     This value is based on the maximum value of the type, e.g., for <see cref="ulong" />, it
+    ///     is 64 whereas for <see cref="long" />, it is 63, because the sign bit will not be used.
+    /// </remarks>
+    protected internal static readonly int MaxLengthInBits = int.CreateChecked(T.PopCount(T.MaxValue));
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="SnowflakeComponent" /> class.
+    ///     Represents the number of bytes required to store an instance of type
+    ///     <typeparamref name="T"/>.
+    /// </summary>
+    /// <remarks>
+    ///     This value is based on the total number of bits of the type, including the sign bit.
+    ///     It should be used to determine buffer sizes when working with this snowflake type.
+    /// </remarks>
+    protected internal static readonly int MaxLengthInBytes = int.CreateChecked(T.PopCount(T.AllBitsSet)) / 8;
+
+    /// <summary>
+    ///     Indicates whether <typeparamref name="T" /> is an unsigned integer type.
+    /// </summary>
+    /// <value>
+    ///     true if the minimum value of the type is zero, which is characteristic of unsigned
+    ///     numeric types, as signed types have negative minimum values; otherwise, false.
+    /// </value>
+    protected internal static readonly bool IsUnsigned = T.MinValue == T.Zero;
+
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private readonly T _mask;
+
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private SnowflakeGenerator<T>? _owner;
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="SnowflakeComponent{T}" /> class.
     /// </summary>
     /// <param name="lengthInBits">
     ///     <para>The number of bits this component will produce.</para>
@@ -45,14 +74,16 @@ public abstract class SnowflakeComponent
     ///     </para>
     /// </param>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///     <paramref name="lengthInBits" /> is less than 1 or greater than 63.
+    ///     <paramref name="lengthInBits" /> is less than 1 or greater than <see cref="MaxLengthInBits" />.
     /// </exception>
     public SnowflakeComponent(int lengthInBits)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(lengthInBits);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(lengthInBits, MaxLengthInBits);
 
-        _mask = (1L << lengthInBits) - 1L;
+        _mask = lengthInBits == MaxLengthInBits
+            ? T.MaxValue
+            : (T.One << lengthInBits) - T.One;
 
         LengthInBits = lengthInBits;
     }
@@ -62,11 +93,11 @@ public abstract class SnowflakeComponent
 
     /// <summary>Gets the last value produced by this component.</summary>
     /// <remarks>Calls to <see cref="GetValue" /> update this value.</remarks>
-    public long LastValue { get; private set; }
+    public T LastValue { get; private set; }
 
     /// <summary>
     ///     Gets the execution order of this component relative to the other components that
-    ///     <seealso cref="SnowflakeGenerator" /> use. If all components have the default order,
+    ///     <seealso cref="SnowflakeGenerator{T}" /> use. If all components have the default order,
     ///     which is 0, they are executed in the order they'll be placed on a snowflake.
     /// </summary>
     /// <remarks>
@@ -83,12 +114,12 @@ public abstract class SnowflakeComponent
     ///     exceeds the number of bits specified by <see cref="LengthInBits" />. If set to true,
     ///     the higher-order bits will be truncated without throwing an exception.
     /// </remarks>
-    protected bool AllowTruncation { get; init; }
+    protected virtual bool AllowTruncation { get; init; }
 
     /// <summary>Gets or sets the snowflake generator that owns this component.</summary>
     /// <exception cref="ArgumentNullException">Value is null.</exception>
     /// <exception cref="InvalidOperationException">Component already has an owner.</exception>
-    internal SnowflakeGenerator? Owner
+    internal SnowflakeGenerator<T>? Owner
     {
         get => _owner;
         set
@@ -105,7 +136,7 @@ public abstract class SnowflakeComponent
     /// <summary>Produces the value that will be placed in a snowflake.</summary>
     /// <param name="ctx">
     ///     Provides information about the current operation and the
-    ///     <see cref="SnowflakeGenerator" /> instance executing it.
+    ///     <see cref="SnowflakeGenerator{T}" /> instance executing it.
     /// </param>
     /// <returns>
     ///     The value generated by this component, masked to have only the lowest
@@ -119,10 +150,12 @@ public abstract class SnowflakeComponent
     ///     <paramref name="ctx" /> is null.
     /// </exception>
     /// <exception cref="OverflowException">
+    ///     The component attempted to produce a value that is too big for type <typeparamref name="T" />.
+    ///     -or-
     ///     The component produced a value that exceeds the number of bits specified by
     ///     <see cref="LengthInBits" />, and <see cref="AllowTruncation" /> was false.
     /// </exception>
-    public long GetValue(SnowflakeGenerationContext ctx)
+    public T GetValue(SnowflakeGenerationContext<T> ctx)
     {
         ArgumentNullException.ThrowIfNull(ctx);
 
@@ -144,13 +177,17 @@ public abstract class SnowflakeComponent
     /// <param name="ctx"><inheritdoc cref="GetValue" path="/param[@name='ctx']" /></param>
     /// <returns>
     ///     The original value generated by this component. It can include more than
-    ///     <see cref="LengthInBits" /> number of bits set, which will be ignored by
-    ///     the caller.
+    ///     <see cref="LengthInBits" /> number of bits set, which will be ignored by the caller if
+    ///     <see cref="AllowTruncation" /> is true; or cause an <see cref="OverflowException" />, if
+    ///     <see cref="AllowTruncation" /> is false.
     /// </returns>
     /// <remarks>
     ///     This method is called by <see cref="GetValue" />, which masks it to have only the lowest
     ///     <see cref="LengthInBits" /> number of bits set, and updates <see cref="LastValue" />
     ///     with it.
     /// </remarks>
-    protected abstract long CalculateValue(SnowflakeGenerationContext ctx);
+    /// <exception cref="OverflowException">
+    ///     The component attempted to produce a value that is too big for type <typeparamref name="T" />.
+    /// </exception>
+    public abstract T CalculateValue(SnowflakeGenerationContext<T> ctx);
 }

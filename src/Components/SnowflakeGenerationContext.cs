@@ -1,21 +1,24 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 
 namespace Snowflakes.Components;
 
 /// <summary>
-///     Provides information about snowflake generation and the <see cref="SnowflakeGenerator" />
+///     Provides information about snowflake generation and the <see cref="SnowflakeGenerator{T}" />
 ///     instance executing it.
 /// </summary>
-public sealed class SnowflakeGenerationContext
+/// <typeparam name="T">The snowflake type.</typeparam>
+public sealed class SnowflakeGenerationContext<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private readonly SnowflakeComponent[] _components;
+    private readonly SnowflakeComponent<T>[] _components;
 
-    internal SnowflakeGenerationContext(SnowflakeComponent[] components) => _components = components;
+    internal SnowflakeGenerationContext(params SnowflakeComponent<T>[] components) => _components = components;
 
     /// <summary>
     ///     Gets all the configured components that are getting used to
     ///     generate the current snowflake.
     /// </summary>
-    public ReadOnlySpan<SnowflakeComponent> Components => _components;
+    public ReadOnlySpan<SnowflakeComponent<T>> Components => _components;
 }

@@ -1,34 +1,48 @@
-﻿using System.ComponentModel;
-using System.Security.Cryptography;
+﻿using System.Numerics;
 using Snowflakes.Components;
-using Snowflakes.Resources;
 
 namespace Snowflakes;
 
-/// <summary>Builds <see cref="SnowflakeGenerator" /> instances.</summary>
-public sealed class SnowflakeGeneratorBuilder
+/// <summary>Builds <see cref="SnowflakeGenerator{T}" /> instances.</summary>
+/// <typeparam name="T">The snowflake type.</typeparam>
+public sealed class SnowflakeGeneratorBuilder<T>
+    where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
 {
-    private readonly HashSet<SnowflakeComponent> _componentSet = new(3);
-    private readonly List<SnowflakeComponent> _componentList = new(3);
+    private readonly HashSet<SnowflakeComponent<T>> _componentSet;
+    private readonly List<SnowflakeComponent<T>> _componentList;
 
     private int _totalLengthInBits;
 
-    /// <summary>Initializes a new instance of the <see cref="SnowflakeGeneratorBuilder" /> class.</summary>
-    public SnowflakeGeneratorBuilder() { }
+    /// <summary>Initializes a new instance of the <see cref="SnowflakeGeneratorBuilder{T}" /> class.</summary>
+    internal SnowflakeGeneratorBuilder()
+    {
+        _componentSet = new(3);
+        _componentList = new(3);
+
+        Components = _componentList.AsReadOnly();
+    }
+
+    /// <summary>Gets the components added to the builder.</summary>
+    /// <remarks>
+    ///     The order of components in this list determines their bit layout in generated snowflakes.
+    ///     This property can be used to inspect the structure of the snowflake format being built.
+    /// </remarks>
+    public IReadOnlyList<SnowflakeComponent<T>> Components { get; }
 
     /// <summary>Adds a timestamp component to the snowflakes that will be generated.</summary>
     /// <returns>A reference to the current builder instance.</returns>
     /// <exception cref="ArgumentException">
-    ///     Adding the component would make the total component length exceed 63 bits.
+    ///     Adding the component would make the total component length exceed the maximum number of
+    ///     bits for type <typeparamref name="T"/> (see <see cref="SnowflakeComponent{T}.MaxLengthInBits"/>).
     /// </exception>
-    /// <inheritdoc cref="TimestampSnowflakeComponent.TimestampSnowflakeComponent" />
-    public SnowflakeGeneratorBuilder AddTimestamp(
+    /// <inheritdoc cref="TimestampSnowflakeComponent{T}.TimestampSnowflakeComponent" />
+    public SnowflakeGeneratorBuilder<T> AddTimestamp(
         int lengthInBits,
         DateTimeOffset epoch,
         long ticksPerUnit = TimeSpan.TicksPerMillisecond,
         TimeProvider? timeProvider = null)
     {
-        var component = new TimestampSnowflakeComponent(lengthInBits, epoch, ticksPerUnit, timeProvider);
+        var component = new TimestampSnowflakeComponent<T>(lengthInBits, epoch, ticksPerUnit, timeProvider);
 
         return Add(component);
     }
@@ -36,16 +50,17 @@ public sealed class SnowflakeGeneratorBuilder
     /// <summary>Adds a blocking timestamp component to the snowflakes that will be generated.</summary>
     /// <returns>A reference to the current builder instance.</returns>
     /// <exception cref="ArgumentException">
-    ///     Adding the component would make the total component length exceed 63 bits.
+    ///     Adding the component would make the total component length exceed the maximum number of
+    ///     bits for type <typeparamref name="T"/> (see <see cref="SnowflakeComponent{T}.MaxLengthInBits"/>).
     /// </exception>
-    /// <inheritdoc cref="TimestampSnowflakeComponent.TimestampSnowflakeComponent" />
-    public SnowflakeGeneratorBuilder AddBlockingTimestamp(
+    /// <inheritdoc cref="TimestampSnowflakeComponent{T}.TimestampSnowflakeComponent" />
+    public SnowflakeGeneratorBuilder<T> AddBlockingTimestamp(
         int lengthInBits,
         DateTimeOffset epoch,
         long ticksPerUnit = TimeSpan.TicksPerMillisecond,
         TimeProvider? timeProvider = null)
     {
-        var component = new BlockingTimestampSnowflakeComponent(lengthInBits, epoch, ticksPerUnit, timeProvider);
+        var component = new BlockingTimestampSnowflakeComponent<T>(lengthInBits, epoch, ticksPerUnit, timeProvider);
 
         return Add(component);
     }
@@ -53,29 +68,13 @@ public sealed class SnowflakeGeneratorBuilder
     /// <summary>Adds a constant component to the snowflakes that will be generated.</summary>
     /// <returns>A reference to the current builder instance.</returns>
     /// <exception cref="ArgumentException">
-    ///     Adding the component would make the total component length exceed 63 bits.
+    ///     Adding the component would make the total component length exceed the maximum number of
+    ///     bits for type <typeparamref name="T"/> (see <see cref="SnowflakeComponent{T}.MaxLengthInBits"/>).
     /// </exception>
-    /// <inheritdoc cref="ConstantSnowflakeComponent(int, long)" />
-    public SnowflakeGeneratorBuilder AddConstant(int lengthInBits, long value)
+    /// <inheritdoc cref="ConstantSnowflakeComponent{T}(int, T)" />
+    public SnowflakeGeneratorBuilder<T> AddConstant(int lengthInBits, T value)
     {
-        var component = new ConstantSnowflakeComponent(lengthInBits, value);
-
-        return Add(component);
-    }
-
-    /// <summary>Adds a constant component to the snowflakes that will be generated.</summary>
-    /// <returns>A reference to the current builder instance.</returns>
-    /// <exception cref="ArgumentException">
-    ///     <inheritdoc cref="ConstantSnowflakeComponent(int, string, HashAlgorithm)" path="/exception[@cref='ArgumentException']"/>
-    ///     -or-
-    ///     Adding the component would make the total component length exceed 63 bits.
-    /// </exception>
-    /// <inheritdoc cref="ConstantSnowflakeComponent(int, string, HashAlgorithm)" />
-    [Obsolete(DeprecationMessages.HashedConstantComponent)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public SnowflakeGeneratorBuilder AddConstant(int lengthInBits, string valueToHash, HashAlgorithm hashAlg)
-    {
-        var component = new ConstantSnowflakeComponent(lengthInBits, valueToHash, hashAlg);
+        var component = new ConstantSnowflakeComponent<T>(lengthInBits, value);
 
         return Add(component);
     }
@@ -90,13 +89,13 @@ public sealed class SnowflakeGeneratorBuilder
     ///     <see cref="AddSequenceForTimestamp" />.
     /// </exception>
     /// <inheritdoc cref="AddSequence(int, int)" />
-    public SnowflakeGeneratorBuilder AddSequenceForTimestamp(int lengthInBits)
+    public SnowflakeGeneratorBuilder<T> AddSequenceForTimestamp(int lengthInBits)
     {
         var refComponentIndex = -1;
         for (var i = 0; i < _componentList.Count; i++)
             if (_componentList[i] is
-                TimestampSnowflakeComponent and
-                not BlockingTimestampSnowflakeComponent)
+                TimestampSnowflakeComponent<T> and
+                not BlockingTimestampSnowflakeComponent<T>)
             {
                 refComponentIndex = i;
                 break;
@@ -117,17 +116,18 @@ public sealed class SnowflakeGeneratorBuilder
     ///     No components added to the builder yet for the sequence component to bind to.
     /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///     <inheritdoc cref="SnowflakeComponent.SnowflakeComponent" path="/exception[@cref='ArgumentOutOfRangeException']"/>
+    ///     <inheritdoc cref="SnowflakeComponent{T}.SnowflakeComponent" path="/exception[@cref='ArgumentOutOfRangeException']"/>
     ///     -or-
     ///     There is no component at the index specified by <paramref name="refComponentIndex"/>.
     ///     -or-
-    ///     <paramref name="refComponentIndex"/> specifies a <see cref="BlockingTimestampSnowflakeComponent" />.
+    ///     <paramref name="refComponentIndex"/> specifies a <see cref="BlockingTimestampSnowflakeComponent{T}" />.
     /// </exception>
     /// <exception cref="ArgumentException">
-    ///     Adding the component would make the total component length exceed 63 bits.
+    ///     Adding the component would make the total component length exceed the maximum number of
+    ///     bits for type <typeparamref name="T"/> (see <see cref="SnowflakeComponent{T}.MaxLengthInBits"/>).
     /// </exception>
-    /// <inheritdoc cref="SequenceSnowflakeComponent(int, int)" />
-    public SnowflakeGeneratorBuilder AddSequence(int lengthInBits, int refComponentIndex)
+    /// <inheritdoc cref="SequenceSnowflakeComponent{T}(int, int)" />
+    public SnowflakeGeneratorBuilder<T> AddSequence(int lengthInBits, int refComponentIndex)
     {
         if (_componentList.Count == 0)
             throw new InvalidOperationException("No components added to reference.");
@@ -139,13 +139,13 @@ public sealed class SnowflakeGeneratorBuilder
                 "There is no component at the specified index.");
 
         var refComponent = _componentList[refComponentIndex];
-        if (refComponent is BlockingTimestampSnowflakeComponent)
+        if (refComponent is BlockingTimestampSnowflakeComponent<T>)
             throw new ArgumentOutOfRangeException(
                 nameof(refComponentIndex),
                 refComponentIndex,
                 "Cannot bind a sequence to a blocking timestamp component.");
 
-        var component = new SequenceSnowflakeComponent(lengthInBits, refComponentIndex);
+        var component = new SequenceSnowflakeComponent<T>(lengthInBits, refComponentIndex);
 
         return Add(component);
     }
@@ -158,15 +158,16 @@ public sealed class SnowflakeGeneratorBuilder
     /// </exception>
     /// <exception cref="ArgumentException">
     ///     <paramref name="component" /> is already added, or adding it would make the total
-    ///     component length exceed 63 bits.
+    ///     component length exceed the maximum number of bits for type <typeparamref name="T"/>
+    ///     (see <see cref="SnowflakeComponent{T}.MaxLengthInBits"/>).
     /// </exception>
-    public SnowflakeGeneratorBuilder Add(SnowflakeComponent component)
+    public SnowflakeGeneratorBuilder<T> Add(SnowflakeComponent<T> component)
     {
         ArgumentNullException.ThrowIfNull(component);
 
-        if (_totalLengthInBits + component.LengthInBits > SnowflakeComponent.MaxLengthInBits)
+        if (_totalLengthInBits + component.LengthInBits > SnowflakeComponent<T>.MaxLengthInBits)
             throw new ArgumentException(
-                $"Adding the component would make the total snowflake length exceed {SnowflakeComponent.MaxLengthInBits} bits.",
+                $"Adding the component would make the total snowflake length exceed {SnowflakeComponent<T>.MaxLengthInBits} bits.",
                 nameof(component));
 
         if (!_componentSet.Add(component))
@@ -182,7 +183,7 @@ public sealed class SnowflakeGeneratorBuilder
     /// <summary>Creates a snowflake generator instance with the added components.</summary>
     /// <returns>A new snowflake generator with the added components.</returns>
     /// <exception cref="InvalidOperationException">No components added.</exception>
-    public SnowflakeGenerator Build()
+    public SnowflakeGenerator<T> Build()
     {
         if (_componentList.Count == 0)
             throw new InvalidOperationException(

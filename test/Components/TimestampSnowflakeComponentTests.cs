@@ -1,26 +1,12 @@
-﻿using NSubstitute;
+﻿using System.Numerics;
+using NSubstitute;
 using Snowflakes.Components;
+using Snowflakes.Tests.Testing;
 
 namespace Snowflakes.Tests.Components;
 
 public class TimestampSnowflakeComponentTests
 {
-    [Theory]
-    [MemberData(nameof(SnowflakeComponentTests.LengthInBits_IsValid_Data), MemberType = typeof(SnowflakeComponentTests))]
-    public void Ctor_validates_lengthInBits(int lengthInBits, bool isValid)
-    {
-        if (isValid)
-        {
-            var component = Construct(lengthInBits, epoch: default);
-            Assert.Equal(lengthInBits, component.LengthInBits);
-        }
-        else
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(nameof(lengthInBits), () =>
-                Construct(lengthInBits, epoch: default));
-        }
-    }
-
     [Theory]
     [InlineData(1, true)]
     [InlineData(0, true)]
@@ -91,7 +77,7 @@ public class TimestampSnowflakeComponentTests
         testTimeProvider.GetUtcNow().Returns(now);
 
         var component = Construct(lengthInBits: 11, epoch, ticksPerUnit, testTimeProvider);
-        var value = component.GetValue(new([component]));
+        var value = component.GetValue(new(component));
 
         Assert.Equal(expectedValue, value);
 
@@ -108,7 +94,7 @@ public class TimestampSnowflakeComponentTests
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(1));
 
         var component = Construct(lengthInBits: 2, epoch, TimeSpan.TicksPerSecond, testTimeProvider);
-        var ctx = new SnowflakeGenerationContext([component]);
+        var ctx = new SnowflakeGenerationContext<long>(component);
 
         testTimeProvider.GetUtcNow().Returns(epoch.AddSeconds(3));
         _ = component.GetValue(ctx);
@@ -117,7 +103,36 @@ public class TimestampSnowflakeComponentTests
         Assert.Throws<OverflowException>(() => component.GetValue(ctx));
     }
 
-    protected virtual TimestampSnowflakeComponent Construct(
+    [Fact]
+    public void Can_be_used_with_built_in_integer_types()
+    {
+        var timeProvider = TestTimeProvider.Frozen;
+        var epoch = timeProvider.GetUtcNow().AddSeconds(-10);
+
+        Test<sbyte>();
+        Test<byte>();
+        Test<short>();
+        Test<ushort>();
+        Test<int>();
+        Test<uint>();
+        Test<long>();
+        Test<ulong>();
+        Test<Int128>();
+        Test<UInt128>();
+
+        void Test<T>()
+            where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
+        {
+            var component = new BlockingTimestampSnowflakeComponent<T>(
+                lengthInBits: 7, epoch, TimeSpan.TicksPerSecond, timeProvider);
+
+            var ctx = new SnowflakeGenerationContext<T>(component);
+
+            Assert.Equal(T.CreateChecked(10), component.GetValue(ctx));
+        }
+    }
+
+    protected virtual TimestampSnowflakeComponent<long> Construct(
         int lengthInBits,
         DateTimeOffset epoch,
         long ticksPerUnit = TimeSpan.TicksPerMillisecond,
