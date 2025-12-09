@@ -4,7 +4,7 @@ using Snowflakes.Tests.Testing;
 
 namespace Snowflakes.Tests.Readme;
 
-public sealed class ReadmeDependencyInjection : BaseReadme
+public sealed class DependencyInjectionReadmeExamples : BaseReadmeExamples
 {
     [Fact]
     public void Dependency_injection_registration()

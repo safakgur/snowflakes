@@ -104,7 +104,7 @@ var snowflake2 = snowflakeGen.NewSnowflake();
 // ...
 ```
 
-Try to keep snowflakes as `Int64` values and use the appropriate integer type when persisting them to a database.
+Try to keep snowflakes as integer values and use the appropriate type when persisting them to a database.
 This will ensure they are stored efficiently and remain sortable.
 
 ### Encoding Snowflakes
@@ -121,7 +121,7 @@ var encodedSnowflake = encoder.Encode(snowflake); // "ddw3cbIG"
 var decodedSnowflake = encoder.Decode(encodedSnowflake); // 139611368062976
 ```
 
-Make sure you decode the values back to `Int64` before sorting or persisting them.
+Make sure you decode a snowflake back to integer before sorting or persisting it.
 
 ### Dependency Injection
 
@@ -182,24 +182,34 @@ allows you to use any integer type that satisfies the constraint,
 You can specify a custom type by using the generic `SnowflakeGenerator.Create*` overloads.
 
 ```csharp
-// No generic type argument - defaults to a builder to generate 64-bit signed snowflakes.
-var snowflakeGenBuilder64 = SnowflakeGenerator.CreateBuilder();
+// No generic type argument - defaults to a builder to 64-bit signed snowflakes.
+SnowflakeGenerator.CreateBuilder();
 
 // Same as above, but the type is specified explicitly.
-var snowflakeGenBuilder64Explicit = SnowflakeGenerator.CreateBuilder<long>();
+SnowflakeGenerator.CreateBuilder<long>();
 
 // Same size, but unsigned, so we get to use one extra bit.
-var snowflakeGenBuilderU64 = SnowflakeGenerator.CreateBuilder<ulong>();
+SnowflakeGenerator.CreateBuilder<ulong>();
 
 // Builders to generate 32-bit signed and unsigned snowflakes - half the default size.
-var snowflakeGenBuilder32 = SnowflakeGenerator.CreateBuilder<int>();
-var snowflakeGenBuilderU32 = SnowflakeGenerator.CreateBuilder<uint>();
+SnowflakeGenerator.CreateBuilder<int>();
+SnowflakeGenerator.CreateBuilder<uint>();
 
-// Builders to generate 128-bit signed and unsigned snowflakes - double the default size, as big as UUIDs.
-var snowflakeGenBuilder128 = SnowflakeGenerator.CreateBuilder<Int128>();
-var snowflakeGenBuilderU128 = SnowflakeGenerator.CreateBuilder<UInt128>();
+// Builders to generate 128-bit signed and unsigned snowflakes - double the default size.
+SnowflakeGenerator.CreateBuilder<Int128>();
+SnowflakeGenerator.CreateBuilder<UInt128>();
 
-// + sbyte, byte, short, ushort, and any other binary integer implementation you can find...
+// + sbyte, byte, short, ushort, and any other binary integer implementation.
+```
+
+`SnowflakeEncoder` also supports specifying the snowflake type.
+
+```csharp
+// No generic type argument - defaults to decoding into a 64-bit signed integer.
+SnowflakeEncoder.Base62Ordinal.Decode(encodedSnowflake);
+
+// Same as above, but the type is specified explicitly.
+SnowflakeEncoder.Base62Ordinal.Decode<long>(encodedSnowflake);
 ```
 
 #### Blocking Timestamp Generation
@@ -325,9 +335,10 @@ testComponent
     });
 
 // Assuming we have a test time provider
-var testEpoch = TestTimeProvider.Frozen.GetUtcNow().AddDays(-10);
+var timeProvider = TestTimeProvider.Frozen;
+var testEpoch = timeProvider.GetUtcNow().AddDays(-10);
 var testSnowflakeGen = SnowflakeGenerator.CreateBuilder()
-    .AddTimestamp(32, testEpoch)
+    .AddTimestamp(32, testEpoch, timeProvider: timeProvider)
     .Add(testComponent)
     .Build();
 ```

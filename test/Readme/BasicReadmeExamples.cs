@@ -1,6 +1,6 @@
 ﻿namespace Snowflakes.Tests.Readme;
 
-public sealed class ReadmeBasics : BaseReadme
+public sealed class BasicReadmeExamples : BaseReadmeExamples
 {
     [Fact]
     public void X_implementation()

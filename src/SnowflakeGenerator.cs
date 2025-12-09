@@ -10,7 +10,7 @@ using Lock =
 
 namespace Snowflakes;
 
-/// <summary>Generates 64-bit Snowflake IDs, also known as snowflakes.</summary>
+/// <summary>Generates integer Snowflake IDs, also known as snowflakes.</summary>
 public static class SnowflakeGenerator
 {
     /// <summary>Creates a new generator for snowflakes of the specified integer type.</summary>
@@ -46,7 +46,7 @@ public static class SnowflakeGenerator
     }
 }
 
-/// <summary>Generates 64-bit Snowflake IDs, also known as snowflakes.</summary>
+/// <summary>Generates integer Snowflake IDs, also known as snowflakes.</summary>
 /// <typeparam name="T">The snowflake type.</typeparam>
 public sealed class SnowflakeGenerator<T>
     where T : struct, IBinaryInteger<T>, IMinMaxValue<T>
@@ -83,7 +83,8 @@ public sealed class SnowflakeGenerator<T>
     /// </exception>
     /// <exception cref="ArgumentException">
     ///     <paramref name="components" /> is empty, contains a null item, contains duplicate items,
-    ///     or the sum of its items' lengths exceeds 63 bits.
+    ///     or the sum of its items' lengths exceeds the maximum number of bits for type
+    ///     <typeparamref name="T"/> (see <see cref="SnowflakeComponent{T}.MaxLengthInBits"/>).
     /// </exception>
     internal SnowflakeGenerator(params IEnumerable<SnowflakeComponent<T>> components)
     {
@@ -146,7 +147,7 @@ public sealed class SnowflakeGenerator<T>
     public ReadOnlySpan<SnowflakeComponent<T>> Components => _context.Components;
 
     /// <summary>Generates a snowflake with the configured components.</summary>
-    /// <returns>A non-negative 64-bit integer, sortable based on the configured components.</returns>
+    /// <returns>A non-negative integer, sortable based on the configured components.</returns>
     /// <exception cref="OverflowException">
     ///     One of the components produced a value that exceeded the maximum number of bits it was
     ///     configured to produce.

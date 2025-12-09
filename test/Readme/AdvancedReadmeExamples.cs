@@ -4,41 +4,49 @@ using Snowflakes.Tests.Testing;
 
 namespace Snowflakes.Tests.Readme;
 
-public sealed class ReadmeAdvanced : BaseReadme
+public sealed class AdvancedReadmeExamples : BaseReadmeExamples
 {
     [Fact]
     public void Custom_size_snowflakes()
     {
         // CONTENT-START
 
-        // No generic type argument - defaults to a builder to generate 64-bit signed snowflakes.
-        var snowflakeGenBuilder64 = SnowflakeGenerator.CreateBuilder();
+        // No generic type argument - defaults to a builder to 64-bit signed snowflakes.
+        SnowflakeGenerator.CreateBuilder();
 
         // Same as above, but the type is specified explicitly.
-        var snowflakeGenBuilder64Explicit = SnowflakeGenerator.CreateBuilder<long>();
+        SnowflakeGenerator.CreateBuilder<long>();
 
         // Same size, but unsigned, so we get to use one extra bit.
-        var snowflakeGenBuilderU64 = SnowflakeGenerator.CreateBuilder<ulong>();
+        SnowflakeGenerator.CreateBuilder<ulong>();
 
         // Builders to generate 32-bit signed and unsigned snowflakes - half the default size.
-        var snowflakeGenBuilder32 = SnowflakeGenerator.CreateBuilder<int>();
-        var snowflakeGenBuilderU32 = SnowflakeGenerator.CreateBuilder<uint>();
+        SnowflakeGenerator.CreateBuilder<int>();
+        SnowflakeGenerator.CreateBuilder<uint>();
 
-        // Builders to generate 128-bit signed and unsigned snowflakes - double the default size, as big as UUIDs.
-        var snowflakeGenBuilder128 = SnowflakeGenerator.CreateBuilder<Int128>();
-        var snowflakeGenBuilderU128 = SnowflakeGenerator.CreateBuilder<UInt128>();
+        // Builders to generate 128-bit signed and unsigned snowflakes - double the default size.
+        SnowflakeGenerator.CreateBuilder<Int128>();
+        SnowflakeGenerator.CreateBuilder<UInt128>();
 
-        // + sbyte, byte, short, ushort, and any other binary integer implementation you can find...
+        // + sbyte, byte, short, ushort, and any other binary integer implementation.
 
         // CONTENT-END
+    }
 
-        _ = (snowflakeGenBuilder64,
-             snowflakeGenBuilder64Explicit,
-             snowflakeGenBuilderU64,
-             snowflakeGenBuilder32,
-             snowflakeGenBuilderU32,
-             snowflakeGenBuilder128,
-             snowflakeGenBuilderU128);
+    [Fact]
+    public void Custom_size_snowflake_encoding()
+    {
+        var encodedSnowflake = "0Ab";
+
+        // CONTENT-START
+
+        // No generic type argument - defaults to decoding into a 64-bit signed integer.
+        SnowflakeEncoder.Base62Ordinal.Decode(encodedSnowflake);
+
+        // Same as above, but the type is specified explicitly.
+        SnowflakeEncoder.Base62Ordinal.Decode<long>(encodedSnowflake);
+
+        // CONTENT-END
     }
 
     [Fact]
@@ -97,9 +105,10 @@ public sealed class ReadmeAdvanced : BaseReadme
             });
 
         // Assuming we have a test time provider
-        var testEpoch = TestTimeProvider.Frozen.GetUtcNow().AddDays(-10);
+        var timeProvider = TestTimeProvider.Frozen;
+        var testEpoch = timeProvider.GetUtcNow().AddDays(-10);
         var testSnowflakeGen = SnowflakeGenerator.CreateBuilder()
-            .AddTimestamp(32, testEpoch)
+            .AddTimestamp(32, testEpoch, timeProvider: timeProvider)
             .Add(testComponent)
             .Build();
 

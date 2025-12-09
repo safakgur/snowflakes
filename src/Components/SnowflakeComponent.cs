@@ -74,7 +74,7 @@ public abstract class SnowflakeComponent<T>
     ///     </para>
     /// </param>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///     <paramref name="lengthInBits" /> is less than 1 or greater than 63.
+    ///     <paramref name="lengthInBits" /> is less than 1 or greater than <see cref="MaxLengthInBits" />.
     /// </exception>
     public SnowflakeComponent(int lengthInBits)
     {
