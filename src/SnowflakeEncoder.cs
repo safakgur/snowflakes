@@ -44,7 +44,7 @@ public sealed class SnowflakeEncoder
     /// <exception cref="ArgumentException">
     ///     <paramref name="digits" /> contains fewer than two, or duplicate characters.
     /// </exception>
-    internal SnowflakeEncoder(string digits)
+    public SnowflakeEncoder(string digits)
     {
         ArgumentNullException.ThrowIfNull(digits);
 
