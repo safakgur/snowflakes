@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 on:
   push:
     branches: [main]
@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout feature branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Restore dependencies
         run: dotnet restore
