@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 on:
   push:
     branches: [main]
@@ -48,7 +48,7 @@ jobs:
           echo "::notice::Line coverage: $lineCov, Branch coverage: $branchCov"
 
       - name: Upload test coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-coverage
           path: artifacts/coverage
